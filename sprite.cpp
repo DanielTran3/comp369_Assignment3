@@ -25,6 +25,8 @@ Sprite::Sprite() {
 	_velX = 0.0;
 	_velY = 0.0;
 
+	_jump = MAXJUMP;
+
 	_image = NULL;
 }
 
@@ -51,7 +53,10 @@ void Sprite::Draw(BITMAP *dest) {
 void Sprite::DrawFrame(BITMAP *dest) {
 	int frameX = _animStartX + (_curFrame % _animColumns) * _width;
 	int frameY = _animStartY + (_curFrame / _animColumns) * _height;
-	masked_blit(_image, dest, frameX, frameY, (int) _x, (int) _y, _width, _height); 
+	BITMAP *temp = create_bitmap(_width, _height);
+	masked_blit(_image, temp, frameX, frameY, 0, 0, _width, _height);
+	draw_sprite(dest, temp, (int) _x, (int) _y);
+	destroy_bitmap(temp);
 }
 
 
@@ -73,12 +78,12 @@ void Sprite::UpdateAnimation() {
 		_frameCount = 0;
 		_curFrame += _animDir;
 		
-		if (_curFrame < 0) {
-			_curFrame = _totalFrames - 1;
+		if (_curFrame < _framesStart) {
+			_curFrame = _framesEnd;
 		}
 		
-		if (_curFrame > _totalFrames - 1) {
-			_curFrame = 0;
+		if (_curFrame >= _framesEnd) {
+			_curFrame = _framesStart;
 		}
 	}
 }
@@ -124,33 +129,82 @@ double Sprite::CenterY() {
 }
 
 void Sprite::PlayerControls() {
-	if (key[KEY_LEFT]) {
-		_direction = 1;
-		_framesStart = 4;
-		_framesEnd = 7;
-		if (++_xCount > _xDelay) {
-			_xCount = 0;
-			_x += _direction * _velX;
-		}
-	}
-	if (key[KEY_RIGHT]) {
-		_direction = -1;
-		_framesStart = 0;
-		_framesEnd = 3;
-		if (++_xCount > _xDelay) {
-			_xCount = 0;
-			if (!CollideWithBlock(_x + _direction * _velX, _y)) {
-				_x += _direction * _velX;				
+	UpdateAnimation();
+	int oldpy = _y; 
+    int oldpx = _x;
+	int facing = 0;
+	int jump;
+	
+	if (key[KEY_RIGHT]) 
+    { 
+        facing = 1;
+        _x += 2;
+        if (++_frameCount > _frameDelay)
+        {
+            _frameCount = 0;
+            _framesStart = 0;
+            _framesEnd = 3;
+			if (_curFrame < _framesStart || _curFrame > _framesEnd) {
+            	_curFrame = _framesStart;	
 			}
-		}
-	}
-	if (key[KEY_SPACE]) {
-		_framesStart = 8;
-		_framesEnd = 10;
-		if (++_yCount < _yDelay) {
-			_x += _direction * _velX;				
-		}
-	}
+            if (++_curFrame > _framesEnd)
+                _curFrame = _framesStart;
+        }
+    }
+    else if (key[KEY_LEFT]) 
+    { 
+        facing = 0; 
+        _x -= 2; 
+        if (++_frameCount > _frameDelay)
+        {
+            _frameCount = 0;
+            _framesStart = 4;
+            _framesEnd = 7;
+            if (_curFrame <_framesStart || _curFrame > _framesEnd) {
+            	_curFrame = _framesStart;	
+			}
+            if (++_curFrame > _framesEnd)
+                _curFrame = _framesStart;
+        }
+    }
+    else _curFrame = 8;
+
+    //handle jumping
+    if (jump == MAXJUMP)
+    { 
+        if (!CollideWithBlock(_x + _width / 2, _y + _height + 5))
+            jump = 0;
+
+	    if (key[KEY_SPACE]) 
+            jump = 30;
+    }
+    else
+    {
+        _y -= jump / 3; 
+        jump--; 
+    }
+
+	if (jump < 0) 
+    { 
+        if (CollideWithBlock(_x + _width / 2, _y + _height))
+		{ 
+            _jump = MAXJUMP; 
+            while (CollideWithBlock(_x + _width / 2, _y + _height))
+                _y -= 2; 
+        } 
+    }
+
+    //check for collided with foreground tiles
+	if (!facing) 
+    { 
+        if (CollideWithBlock(_x, _y + _height)) 
+            _x = oldpx; 
+    }
+	else 
+    { 
+        if (CollideWithBlock(_x + _width, _y + _height)) 
+            _x = oldpx; 
+    }
 }
 
 int Sprite::getAlive() {
@@ -260,6 +314,12 @@ int Sprite::getFramesEnd() {
 }
 void Sprite::setFramesEnd(int framesEnd) {
 	_framesEnd = framesEnd;
+}
+int Sprite::getJump() {
+	return _jump;
+}
+void Sprite::setJump(int jump) {
+	_jump = jump;
 }
 double Sprite::getX(){
 	return _x;

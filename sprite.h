@@ -1,6 +1,8 @@
 #ifndef _SPRITE_H
 #define _SPRITE_H 1
 
+#define MAXJUMP 1600
+
 #include "allegro.h"
 #include "mappyal.h"
 
@@ -20,6 +22,8 @@ class Sprite {
 		
 		double _x, _y;
 		double _velX, _velY;
+
+		int _jump;
 
 		BITMAP *_image;
 		
@@ -76,6 +80,8 @@ class Sprite {
 		void setFramesStart(int framesStart);
 		int getFramesEnd();
 		void setFramesEnd(int framesEnd);
+		int getJump();
+		void setJump(int jump);
 		
 		double getX();
 		void setX(double x);

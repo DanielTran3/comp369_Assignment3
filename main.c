@@ -28,9 +28,18 @@ int collided(int x, int y)
 	Function to initialize the player's starting position and settings;
 */
 void initializePlayer(Sprite *player) {
-	player->Load("player.bmp");
-	player->setX(50);
-	player->setY(BOTTOM - player->getHeight() - 50);
+	player->Load("mappy/player.bmp");
+	player->setX(WIDTH / 2);
+	player->setY(HEIGHT - player->getHeight() - 32);
+	player->setWidth(32);
+	player->setHeight(32);
+	player->setAnimColumns(11);
+	player->setCurFrame(8);
+	player->setFrameDelay(10);
+	player->setXDelay(1);
+	player->setYDelay(5);
+	player->setVelX(-3);
+	player->setVelY(5);
 }
 
 /*
@@ -38,8 +47,8 @@ void initializePlayer(Sprite *player) {
 */
 void loadSpriteAnimations() {
 	BITMAP *temp;
-	temp = load_bitmap("guy.bmp", NULL);
-    for (int n = 0; n < 8; n++)
+	temp = load_bitmap("mappy/player.bmp", NULL);
+    for (int n = 0; n < 11; n++)
     {
     	player_image[n] = grabframe(temp, 32, 32, 0, 0, 11, n);	
 	}
@@ -47,8 +56,8 @@ void loadSpriteAnimations() {
 }
 
 int main(void) {
-	int mapxoff, mapyoff;
-	allegro_init();
+	int mapxoff, mapyoff, facing;
+	allegro_init();	
 	set_color_depth(24);
 	install_keyboard();
 	srand(time(NULL));
@@ -77,9 +86,8 @@ int main(void) {
 	
 	while(1) {
 		//update the map scroll position
-		mapxoff = player->getX() + player->getWidth()/2 - WIDTH/2 + 10;
-		mapyoff = player->getY() + player->getHeight()/2 - HEIGHT/2 + 10;
-
+		mapxoff = WIDTH / 2;
+		mapyoff = BOTTOM;
 
         //avoid moving beyond the map edge
 		if (mapxoff < 0) mapxoff = 0;
@@ -94,6 +102,17 @@ int main(void) {
 
         //draw foreground tiles
 		MapDrawFG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1, 0);
+		
+		player->PlayerControls();
+		// Draw the player
+		player->DrawFrame(buffer);
+//		draw_sprite(buffer, player_image[8], 
+//                player->getX(), player->getY());
+		//blit the double buffer 
+		vsync();
+        acquire_screen();
+		blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
+        release_screen();
 		if (key[KEY_ESC]) {
 			break;
 		}

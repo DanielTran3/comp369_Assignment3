@@ -4,9 +4,9 @@
 CPP      = g++.exe -D__DEBUG__
 CC       = gcc.exe -D__DEBUG__
 WINDRES  = windres.exe
-OBJ      = main.o sound.o sprite.o mappyal.o
-LINKOBJ  = main.o sound.o sprite.o mappyal.o
-LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib32" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib32" -static-libgcc ../../../../../../../allegro-4.4.2-mingw-4.5.2/bin/allegro-4.4.2-md.dll -m32 -g3
+OBJ      = main.o sound.o sprite.o
+LINKOBJ  = main.o sound.o sprite.o
+LIBS     = -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib32" -L"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/lib32" -static-libgcc mappyal.o ../../../../../../../allegro-4.4.2-mingw-4.5.2/bin/allegro-4.4.2-md.dll -m32 -g3
 INCS     = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include"
 CXXINCS  = -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include" -I"C:/Program Files (x86)/Dev-Cpp/MinGW64/lib/gcc/x86_64-w64-mingw32/4.9.2/include/c++"
 BIN      = ToTheTop.exe
@@ -32,6 +32,3 @@ sound.o: sound.cpp
 
 sprite.o: sprite.cpp
 	$(CPP) -c sprite.cpp -o sprite.o $(CXXFLAGS)
-
-mappyal.o: mappyal.c
-	$(CPP) -c mappyal.c -o mappyal.o $(CXXFLAGS)
