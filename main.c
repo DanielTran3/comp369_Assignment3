@@ -2,7 +2,13 @@
 #include "toTheTop.h"
 
 Sound *toTheTopSounds;
-BITMAP *player_image[11];
+volatile int spikesY = BOTTOM + HEIGHT;
+
+void draw_deathSpikes(void) {
+	spikesY -= mapblockheight;
+	printf("UPDATING SPIKES: %i\n", spikesY);
+}
+END_OF_FUNCTION(draw_deathSpikes)
 
 //tile grabber
 BITMAP *grabframe(BITMAP *source, 
@@ -24,13 +30,19 @@ int collided(int x, int y)
 	return blockdata->tl;
 }
 
+void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocation) {
+	for (int x = 0; x < xDistance; x += sprite->getWidth()) {
+		blit(sprite->getImage(), dest, 0, 0, x, yLocation, sprite->getWidth(), sprite->getHeight());
+	}
+}
+
 /*
 	Function to initialize the player's starting position and settings;
 */
 void initializePlayer(Sprite *player) {
 	player->Load("mappy/player.bmp");
 	player->setX(WIDTH / 2);
-	player->setY(HEIGHT - player->getHeight() - 32);
+	player->setY(BOTTOM + HEIGHT - player->getHeight() - mapblockheight - 1);
 	player->setWidth(32);
 	player->setHeight(32);
 	player->setAnimColumns(11);
@@ -45,21 +57,23 @@ void initializePlayer(Sprite *player) {
 /*
 	Function to initialize the frames for sprites
 */
-void loadSpriteAnimations() {
-	BITMAP *temp;
-	temp = load_bitmap("mappy/player.bmp", NULL);
-    for (int n = 0; n < 11; n++)
-    {
-    	player_image[n] = grabframe(temp, 32, 32, 0, 0, 11, n);	
-	}
-    destroy_bitmap(temp);
-}
+//void loadSpriteAnimations() {
+//	BITMAP *temp;
+//	temp = load_bitmap("mappy/player.bmp", NULL);
+//    for (int n = 0; n < 11; n++)
+//    {
+//    	player_image[n] = grabframe(temp, 32, 32, 0, 0, 11, n);	
+//	}
+//    destroy_bitmap(temp);
+//}
 
 int main(void) {
-	int mapxoff, mapyoff, facing;
+	int mapxoff, mapyoff;
+	
 	allegro_init();	
 	set_color_depth(24);
 	install_keyboard();
+	install_timer();
 	srand(time(NULL));
 	
 	if (install_sound(DIGI_AUTODETECT, MIDI_NONE, "") != 0) {
@@ -80,14 +94,31 @@ int main(void) {
 	
 	MapLoad("mappy/toTheTop.fmp");
 	
+	LOCK_VARIABLE(spikesY);
+    LOCK_FUNCTION(draw_deathSpikes);
+    install_int(draw_deathSpikes, 5000);
+	Sprite *spike = new Sprite();
+	ret = spike->Load(SPIKE_BMP);
+	if (ret == 0) {
+		allegro_message("Error loading mappy/deathSpike.bmp");
+	}
+	spike->setWidth(32);
+	spike->setHeight(32);
+	spike->setX(0);
+	spike->setY(spikesY);
+	
+	BITMAP *spikeOverlay = create_bitmap(WIDTH, BOTTOM + HEIGHT);
+	clear_bitmap(spikeOverlay);
+	
 	Sprite *player = new Sprite();
 	initializePlayer(player);
-	loadSpriteAnimations();
+//	loadSpriteAnimations();
 	
 	while(1) {
+		player->PlayerControls();
 		//update the map scroll position
 		mapxoff = WIDTH / 2;
-		mapyoff = BOTTOM;
+		mapyoff = player->getY() - HEIGHT / 2;
 
         //avoid moving beyond the map edge
 		if (mapxoff < 0) mapxoff = 0;
@@ -97,18 +128,37 @@ int main(void) {
             mapyoff = 0;
 		if (mapyoff > (mapheight * mapblockheight - HEIGHT)) 
             mapyoff = mapheight * mapblockheight - HEIGHT;
+//        printf("mapxoff: %i  mapyoff: %i\n", mapxoff, mapyoff);
 		//draw the background tiles
 		MapDrawBG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1);
 
         //draw foreground tiles
 		MapDrawFG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1, 0);
 		
-		player->PlayerControls();
 		// Draw the player
-		player->DrawFrame(buffer);
+		player->DrawFrame(buffer, mapxoff, mapyoff);
 //		draw_sprite(buffer, player_image[8], 
 //                player->getX(), player->getY());
 		//blit the double buffer 
+		if (spike->getY() != spikesY) {
+			printf("y Pos: %f\n", player->getY());
+			printf("spike x Pos: %f\n", spike->getX());
+			printf("spike y Pos: %f\n", spike->getY());
+			printf("spike width: %f\n", spike->getWidth());
+			printf("spike height: %f\n", spike->getHeight());
+			spike->setY(spikesY);
+//			drawHLineOfSprites(spike, buffer, WIDTH, spikesY);
+//			while (spike->getX() < WIDTH) {
+//				printf("x Pos: %f\n", spike->getX());				
+////				blit(spike->getImage(), buffer, 0, 0, spike->getX(), spike->getY(), spike->getWidth(), spike->getHeight());
+//				drawSprite(buffer, spike->getImage(), 0, BOTTOM + HEIGHT - 32);
+////				blit(spike->getImage(), buffer, 0, 0, spike->getX(), BOTTOM + HEIGHT - 32, 32, 32);
+//				spike->setX(spike->getX() + spike->getWidth());
+//			}
+//			spike->setX(0);
+			draw_sprite(spikeOverlay, spike->getImage(), WIDTH / 2, HEIGHT / 2);
+		}
+		blit(spikeOverlay, buffer, 0, mapyoff + HEIGHT / 2, 0, 0, WIDTH, HEIGHT);
 		vsync();
         acquire_screen();
 		blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);

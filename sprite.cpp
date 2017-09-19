@@ -19,13 +19,12 @@ Sprite::Sprite() {
 	_animStartY = 0;
 	_framesStart = 0;
 	_framesEnd = 0;
-	
+	_jump = MAXJUMP;
+		
 	_x = 0.0f;
 	_y = 0.0f;
 	_velX = 0.0;
 	_velY = 0.0;
-
-	_jump = MAXJUMP;
 
 	_image = NULL;
 }
@@ -50,12 +49,12 @@ void Sprite::Draw(BITMAP *dest) {
 	draw_sprite(dest, _image, (int) _x, (int) _y);
 }
 
-void Sprite::DrawFrame(BITMAP *dest) {
+void Sprite::DrawFrame(BITMAP *dest, int xOffset, int yOffset) {
 	int frameX = _animStartX + (_curFrame % _animColumns) * _width;
 	int frameY = _animStartY + (_curFrame / _animColumns) * _height;
 	BITMAP *temp = create_bitmap(_width, _height);
-	masked_blit(_image, temp, frameX, frameY, 0, 0, _width, _height);
-	draw_sprite(dest, temp, (int) _x, (int) _y);
+	blit(_image, temp, frameX, frameY, 0, 0, _width, _height);
+	draw_sprite(dest, temp, (int) _x - xOffset, (int) _y - yOffset);
 	destroy_bitmap(temp);
 }
 
@@ -78,12 +77,8 @@ void Sprite::UpdateAnimation() {
 		_frameCount = 0;
 		_curFrame += _animDir;
 		
-		if (_curFrame < _framesStart) {
-			_curFrame = _framesEnd;
-		}
-		
-		if (_curFrame >= _framesEnd) {
-			_curFrame = _framesStart;
+		if (_curFrame <_framesStart || _curFrame > _framesEnd) {
+            	_curFrame = _framesStart;	
 		}
 	}
 }
@@ -117,6 +112,8 @@ int Sprite::CollideWithBlock(int x, int y)
 {
     BLKSTR *blockdata;
 	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
+//	printf("Blockdata: %c\n", blockdata->tl);
+//	printf("x: %i  y: %i\n", x, y);
 	return blockdata->tl;
 }
 
@@ -129,73 +126,59 @@ double Sprite::CenterY() {
 }
 
 void Sprite::PlayerControls() {
-	UpdateAnimation();
+	
 	int oldpy = _y; 
     int oldpx = _x;
-	int facing = 0;
-	int jump;
 	
 	if (key[KEY_RIGHT]) 
     { 
-        facing = 1;
+        _direction = 1;
         _x += 2;
-        if (++_frameCount > _frameDelay)
-        {
-            _frameCount = 0;
-            _framesStart = 0;
-            _framesEnd = 3;
-			if (_curFrame < _framesStart || _curFrame > _framesEnd) {
-            	_curFrame = _framesStart;	
-			}
-            if (++_curFrame > _framesEnd)
-                _curFrame = _framesStart;
-        }
+        _framesStart = 0;
+        _framesEnd = 3;
+        UpdateAnimation();
     }
     else if (key[KEY_LEFT]) 
     { 
-        facing = 0; 
+        _direction = 0; 
         _x -= 2; 
-        if (++_frameCount > _frameDelay)
-        {
-            _frameCount = 0;
-            _framesStart = 4;
-            _framesEnd = 7;
-            if (_curFrame <_framesStart || _curFrame > _framesEnd) {
-            	_curFrame = _framesStart;	
-			}
-            if (++_curFrame > _framesEnd)
-                _curFrame = _framesStart;
-        }
+        _framesStart = 4;
+        _framesEnd = 7;
+        UpdateAnimation();
     }
     else _curFrame = 8;
 
     //handle jumping
-    if (jump == MAXJUMP)
+    if (_jump == MAXJUMP)
     { 
         if (!CollideWithBlock(_x + _width / 2, _y + _height + 5))
-            jump = 0;
+            _jump = 0;
 
-	    if (key[KEY_SPACE]) 
-            jump = 30;
+	    if (key[KEY_SPACE]) {
+	    	_jump = 22;
+		}
     }
     else
     {
-        _y -= jump / 3; 
-        jump--; 
+        _y -= _jump / 3; 
+        _jump--; 
     }
-
-	if (jump < 0) 
+//	printf("jump: %i\n", _jump);
+	if (_jump < 0) 
     { 
         if (CollideWithBlock(_x + _width / 2, _y + _height))
 		{ 
-            _jump = MAXJUMP; 
-            while (CollideWithBlock(_x + _width / 2, _y + _height))
-                _y -= 2; 
+			_jump = MAXJUMP;
+
+			// After landing, fix height so there is no more collision
+            while (CollideWithBlock(_x + _width / 2, _y + _height)) {
+            	_y -= 1;
+			}
         } 
     }
 
     //check for collided with foreground tiles
-	if (!facing) 
+	if (!_direction) 
     { 
         if (CollideWithBlock(_x, _y + _height)) 
             _x = oldpx; 
@@ -210,97 +193,97 @@ void Sprite::PlayerControls() {
 int Sprite::getAlive() {
 	return _alive;
 }
-void Sprite::setAlive(int alive){
+void Sprite::setAlive(int alive) {
 	_alive = alive;
 }
-int Sprite::getDirection(){
+int Sprite::getDirection() {
 	return _direction;
 }
-void Sprite::setDirection(int direction){
+void Sprite::setDirection(int direction) {
 	_direction = direction;
 }
-int Sprite::getAnimDir(){
+int Sprite::getAnimDir() {
 	return _animDir;
 }
-void Sprite::setAnimDir(int animDir){
+void Sprite::setAnimDir(int animDir) {
 	_animDir = animDir;
 }
-int Sprite::getAnimColumns(){
+int Sprite::getAnimColumns() {
 	return _animColumns;
 }
-void Sprite::setAnimColumns(int animColumns){
+void Sprite::setAnimColumns(int animColumns) {
 	_animColumns = animColumns;
 }
-int Sprite::getWidth(){
+int Sprite::getWidth() {
 	return _width;
 }
-void Sprite::setWidth(int width){
+void Sprite::setWidth(int width) {
 	_width = width;
 }
-int Sprite::getHeight(){
+int Sprite::getHeight() {
 	return _height;
 }
-void Sprite::setHeight(int height){
+void Sprite::setHeight(int height) {
 	_height = height;
 }
-int Sprite::getXDelay(){
+int Sprite::getXDelay() {
 	return _xDelay;
 }
-void Sprite::setXDelay(int xDelay){
+void Sprite::setXDelay(int xDelay) {
 	_xDelay = xDelay;
 }
-int Sprite::getYDelay(){
+int Sprite::getYDelay() {
 	return _yDelay;
 }
-void Sprite::setYDelay(int yDelay){
+void Sprite::setYDelay(int yDelay) {
 	_yDelay = yDelay;
 }
-int Sprite::getXCount(){
+int Sprite::getXCount() {
 	return _xCount;
 }
-void Sprite::setXCount(int xCount){
+void Sprite::setXCount(int xCount) {
 	_xCount = xCount;
 }
-int Sprite::getYCount(){
+int Sprite::getYCount() {
 	return _yCount;
 }
-void Sprite::setYCount(int yCount){
+void Sprite::setYCount(int yCount) {
 	_yCount = yCount;
 }
-int Sprite::getCurFrame(){
+int Sprite::getCurFrame() {
 	return _curFrame;
 }
-void Sprite::setCurFrame(int curFrame){
+void Sprite::setCurFrame(int curFrame) {
 	_curFrame = curFrame;
 }
-int Sprite::getTotalFrames(){
+int Sprite::getTotalFrames() {
 	return _totalFrames;
 }
-void Sprite::setTotalFrames(int totalFrames){
+void Sprite::setTotalFrames(int totalFrames) {
 	_totalFrames = totalFrames;
 }
-int Sprite::getFrameCount(){
+int Sprite::getFrameCount() {
 	return _frameCount;
 }
-void Sprite::setFrameCount(int frameCount){
+void Sprite::setFrameCount(int frameCount) {
 	_frameCount = frameCount;
 }
-int Sprite::getFrameDelay(){
+int Sprite::getFrameDelay() {
 	return _frameDelay;
 }
-void Sprite::setFrameDelay(int frameDelay){
+void Sprite::setFrameDelay(int frameDelay) {
 	_frameDelay = frameDelay;
 }
-int Sprite::getAnimStartX(){
+int Sprite::getAnimStartX() {
 	return _animStartX;
 }
-void Sprite::setAnimStartX(int animStartX){
+void Sprite::setAnimStartX(int animStartX) {
 	_animStartX = animStartX;
 }
-int Sprite::getAnimStartY(){
+int Sprite::getAnimStartY() {
 	return _animStartY;
 }
-void Sprite::setAnimStartY(int animStartY){
+void Sprite::setAnimStartY(int animStartY) {
 	_animStartY = animStartY;
 }
 int Sprite::getFramesStart() {
@@ -321,33 +304,33 @@ int Sprite::getJump() {
 void Sprite::setJump(int jump) {
 	_jump = jump;
 }
-double Sprite::getX(){
+double Sprite::getX() {
 	return _x;
 }
-void Sprite::setX(double x){
+void Sprite::setX(double x ) {
 	_x = x;
 }
-double Sprite::getY(){
+double Sprite::getY() {
 	return _y;
 }
-void Sprite::setY(double y){
+void Sprite::setY(double y) {
 	_y = y;
 }
-double Sprite::getVelX(){
+double Sprite::getVelX() {
 	return _velX;
 }
-void Sprite::setVelX(double velX){
+void Sprite::setVelX(double velX) {
 	_velX = velX;
 }
-double Sprite::getVelY(){
+double Sprite::getVelY() {
 	return _velY;
 }
-void Sprite::setVelY(double velY){
+void Sprite::setVelY(double velY) {
 	_velY = velY;
 }
-BITMAP *Sprite::getImage(){
+BITMAP *Sprite::getImage() {
 	return _image;
 }
-void Sprite::setImage(BITMAP *image){
+void Sprite::setImage(BITMAP *image) {
 	_image = image;
 }

@@ -22,6 +22,8 @@
 #define BACKGROUND "images/background_1.pcx"
 #define GAMEOVER_BACKGROUND "images/ending.pcx"
 
+#define SPIKE_BMP "mappy/deathSpike.bmp"
+
 #define WHITE makecol(255, 255, 255)
 #define BLACK makecol(0, 0, 0)
 #define LIGHT_GREEN makecol(100, 255, 0)

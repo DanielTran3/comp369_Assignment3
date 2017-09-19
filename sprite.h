@@ -3,6 +3,7 @@
 
 #define MAXJUMP 1600
 
+#include <stdio.h>
 #include "allegro.h"
 #include "mappyal.h"
 
@@ -19,11 +20,10 @@ class Sprite {
 		int _frameCount, _frameDelay;
 		int _animStartX, _animStartY;
 		int _framesStart, _framesEnd;
-		
+		int _jump;
+				
 		double _x, _y;
 		double _velX, _velY;
-
-		int _jump;
 
 		BITMAP *_image;
 		
@@ -33,7 +33,7 @@ class Sprite {
 		
 		int Load(const char *filename);
 		void Draw(BITMAP *dest);
-		void DrawFrame(BITMAP *dest);
+		void DrawFrame(BITMAP *dest, int xOffset, int yOffset);
 		void UpdatePosition();
 		void UpdateAnimation();
 		int Inside(int x,int y,int left,int top,int right,int bottom);
