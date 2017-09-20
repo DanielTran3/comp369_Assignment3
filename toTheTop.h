@@ -4,13 +4,14 @@
 #include <allegro.h>
 #include "sprite.h"
 #include "sound.h"
+#include "spritehandler.h"
 
 #define MODE_W GFX_AUTODETECT_WINDOWED
 #define MODE_F GFX_AUTODETECT_FULLSCREEN
 
 #define WIDTH 640
 #define HEIGHT 480
-#define BOTTOM 48000 - HEIGHT
+#define BOTTOM 48000
 
 #define CHARACTER_WIDTH 8
 #define LINE_SPACING 10
@@ -28,5 +29,10 @@
 #define BLACK makecol(0, 0, 0)
 #define LIGHT_GREEN makecol(100, 255, 0)
 #define RED makecol(255, 0, 0)
+
+void displayGameInformation(Sprite *player, BITMAP *dest);
+void displayGameOverScreen();
+int getHorizontalSpacing(const char *text);
+void draw_pretty_box(const char * textToMeasure, int x, int y, int offset_x, int offset_y, int numLines);
 
 #endif

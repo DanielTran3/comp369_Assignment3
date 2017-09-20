@@ -2,6 +2,7 @@
 #define _SPRITE_H 1
 
 #define MAXJUMP 1600
+#define BOTTOM 48000
 
 #include <stdio.h>
 #include "allegro.h"
@@ -21,6 +22,7 @@ class Sprite {
 		int _animStartX, _animStartY;
 		int _framesStart, _framesEnd;
 		int _jump;
+		int _levelReached;
 				
 		double _x, _y;
 		double _velX, _velY;
@@ -43,6 +45,7 @@ class Sprite {
 		double CenterX();
 		double CenterY();
 		void PlayerControls();
+		void UpdateLevelReached();
 		
 		int getAlive();
 		void setAlive(int alive);
@@ -82,6 +85,7 @@ class Sprite {
 		void setFramesEnd(int framesEnd);
 		int getJump();
 		void setJump(int jump);
+		int getLevelReached();
 		
 		double getX();
 		void setX(double x);

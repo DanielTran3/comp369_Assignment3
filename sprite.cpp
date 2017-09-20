@@ -20,7 +20,8 @@ Sprite::Sprite() {
 	_framesStart = 0;
 	_framesEnd = 0;
 	_jump = MAXJUMP;
-		
+	_levelReached = 0;
+	
 	_x = 0.0f;
 	_y = 0.0f;
 	_velX = 0.0;
@@ -190,6 +191,15 @@ void Sprite::PlayerControls() {
     }
 }
 
+void Sprite::UpdateLevelReached() {
+	_levelReached = (int) ((BOTTOM - _y - _height - mapblockheight) / 32); 
+}
+
+/*
+	Method that moves a sprite left and right ontop of a tile platform.
+	Performs collision check to see if another sprite has collided with it.
+*/
+
 int Sprite::getAlive() {
 	return _alive;
 }
@@ -303,6 +313,9 @@ int Sprite::getJump() {
 }
 void Sprite::setJump(int jump) {
 	_jump = jump;
+}
+int Sprite::getLevelReached() {
+	return _levelReached;
 }
 double Sprite::getX() {
 	return _x;

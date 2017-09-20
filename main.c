@@ -2,13 +2,72 @@
 #include "toTheTop.h"
 
 Sound *toTheTopSounds;
-volatile int spikesY = BOTTOM + HEIGHT;
+volatile int spikesY = BOTTOM;
+volatile int timeElapsed = 0;
 
-void draw_deathSpikes(void) {
+/*
+	Update the level that the spikes are at
+*/
+void update_deathSpikes(void) {
 	spikesY -= mapblockheight;
 	printf("UPDATING SPIKES: %i\n", spikesY);
 }
-END_OF_FUNCTION(draw_deathSpikes)
+END_OF_FUNCTION(update_deathSpikes)
+
+/*
+	Update the elapsed time
+*/
+void update_time(void) {
+	timeElapsed++;
+}
+END_OF_FUNCTION(update_time);
+
+/*
+	Displays the player's current level and the time that has elapsed
+*/
+void displayGameInformation(Sprite *player, BITMAP *dest) {
+	int xOffset = WIDTH / 2;
+	int yOffset = 5;
+	rectfill(dest, 0, 0, WIDTH, yOffset + 10, BLACK);
+	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Level Reached: %i", player->getLevelReached());
+	textprintf_ex(dest, font, WIDTH - 210, yOffset, WHITE, 0, "Time Elapsed: %i seconds", timeElapsed);
+	hline(dest, 0, yOffset + 10, WIDTH, WHITE);
+}
+
+/*
+	Displays the game over screen
+*/
+void displayGameOverScreen() {
+//void displayGameOverScreen(PlayerInfo *player, FONT *gameOverFont) {
+//	drawImage(GAMEOVER_BACKGROUND);
+    int xOffset = WIDTH / 2;
+    int yOffset = HEIGHT / 4 + 50;
+
+    draw_pretty_box("Press Enter To Retry or ESC to Exit", xOffset / 2 + 20, yOffset, 30, 30, 14);
+//    textprintf_centre_ex(screen, gameOverFont, xOffset, yOffset - 20, WHITE, -1, "Game Over");
+    textprintf_centre_ex(screen, font, xOffset, yOffset - 20, WHITE, -1, "Game Over");
+//	textprintf_centre_ex(screen, font, xOffset, yOffset + 5 * LINE_SPACING, WHITE, -1, "Your Score:    %i", player->getScore());
+//    textprintf_centre_ex(screen, font, xOffset, yOffset + 6.5 * LINE_SPACING, WHITE, -1, "Highest Score: %i", player->getHighestScore());
+//    textprintf_centre_ex(screen, font, xOffset, yOffset + 9 * LINE_SPACING, WHITE, -1, "Your Level:    %i", player->getLevel());
+//    textprintf_centre_ex(screen, font, xOffset, yOffset + 10.5 * LINE_SPACING, WHITE, -1, "Highest Level: %i", player->getHighestLevel());
+	textprintf_centre_ex(screen, font, xOffset, yOffset + 13 * LINE_SPACING, WHITE, -1, "Press Enter To Retry or ESC to Exit");
+}
+
+/*
+	Get the number of characters in the inputted text
+*/
+int getHorizontalSpacing(const char *text) {
+	return text_length(font, text) / CHARACTER_WIDTH;
+}
+
+/*
+	Draw a box based on the text length and number of lines
+*/
+void draw_pretty_box(const char * textToMeasure, int x, int y, int offset_x, int offset_y, int numLines) {
+	int textLength = getHorizontalSpacing(textToMeasure) * CHARACTER_WIDTH;
+	rectfill(screen, x - offset_x, y - offset_y, x + textLength + offset_x, y + (numLines * LINE_SPACING) + offset_y, BLACK);
+	rect(screen, x - offset_x, y - offset_y, x + textLength + offset_x, y + (numLines * LINE_SPACING) + offset_y, WHITE);
+}
 
 //tile grabber
 BITMAP *grabframe(BITMAP *source, 
@@ -31,8 +90,14 @@ int collided(int x, int y)
 }
 
 void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocation) {
-	for (int x = 0; x < xDistance; x += sprite->getWidth()) {
-		blit(sprite->getImage(), dest, 0, 0, x, yLocation, sprite->getWidth(), sprite->getHeight());
+	int tempY = yLocation;
+	while (tempY < HEIGHT) {
+		for (int x = 0; x < xDistance; x += sprite->getWidth()) {
+			sprite->setX(x);
+			sprite->setY(tempY);
+			sprite->Draw(dest);
+		}
+		tempY += sprite->getHeight();
 	}
 }
 
@@ -42,7 +107,7 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 void initializePlayer(Sprite *player) {
 	player->Load("mappy/player.bmp");
 	player->setX(WIDTH / 2);
-	player->setY(BOTTOM + HEIGHT - player->getHeight() - mapblockheight - 1);
+	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
 	player->setWidth(32);
 	player->setHeight(32);
 	player->setAnimColumns(11);
@@ -54,18 +119,6 @@ void initializePlayer(Sprite *player) {
 	player->setVelY(5);
 }
 
-/*
-	Function to initialize the frames for sprites
-*/
-//void loadSpriteAnimations() {
-//	BITMAP *temp;
-//	temp = load_bitmap("mappy/player.bmp", NULL);
-//    for (int n = 0; n < 11; n++)
-//    {
-//    	player_image[n] = grabframe(temp, 32, 32, 0, 0, 11, n);	
-//	}
-//    destroy_bitmap(temp);
-//}
 
 int main(void) {
 	int mapxoff, mapyoff;
@@ -94,11 +147,19 @@ int main(void) {
 	
 	MapLoad("mappy/toTheTop.fmp");
 	
+	// Update the spike's location every 5 seconds to move up a level
 	LOCK_VARIABLE(spikesY);
-    LOCK_FUNCTION(draw_deathSpikes);
-    install_int(draw_deathSpikes, 5000);
+    LOCK_FUNCTION(update_deathSpikes);
+    install_int(update_deathSpikes, 5000);
+    
+    // Update the timer that the user is alive
+	LOCK_VARIABLE(timeElapsed);
+	LOCK_FUNCTION(update_time);
+	install_int(update_time, 1000);
+	
 	Sprite *spike = new Sprite();
 	ret = spike->Load(SPIKE_BMP);
+	
 	if (ret == 0) {
 		allegro_message("Error loading mappy/deathSpike.bmp");
 	}
@@ -107,14 +168,17 @@ int main(void) {
 	spike->setX(0);
 	spike->setY(spikesY);
 	
-	BITMAP *spikeOverlay = create_bitmap(WIDTH, BOTTOM + HEIGHT);
-	clear_bitmap(spikeOverlay);
+//	BITMAP *spikeOverlay = create_bitmap(WIDTH, BOTTOM);
+//	clear_bitmap(spikeOverlay);
 	
 	Sprite *player = new Sprite();
 	initializePlayer(player);
-//	loadSpriteAnimations();
+
+	SpriteHandler *enemySpriteHandler = new SpriteHandler();
+	enemySpriteHandler->SpawnEnemies();
 	
 	while(1) {
+		player->UpdateLevelReached();
 		player->PlayerControls();
 		//update the map scroll position
 		mapxoff = WIDTH / 2;
@@ -128,6 +192,7 @@ int main(void) {
             mapyoff = 0;
 		if (mapyoff > (mapheight * mapblockheight - HEIGHT)) 
             mapyoff = mapheight * mapblockheight - HEIGHT;
+        
 //        printf("mapxoff: %i  mapyoff: %i\n", mapxoff, mapyoff);
 		//draw the background tiles
 		MapDrawBG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1);
@@ -135,34 +200,34 @@ int main(void) {
         //draw foreground tiles
 		MapDrawFG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1, 0);
 		
+		// If mapyoff + HEIGHT (Bottom of the screen) > spikesY, then the spikes should be
+		// displayed on the screen.
+		if (mapyoff + HEIGHT > spikesY) {
+			printf("SPIKES START: %i\n", spikesY - mapyoff);
+			printf("DIFF: %f\n", player->getY() - spikesY);
+			// Display spikes from HEIGHT - (mapyoff + HEIGHT - spikesY) to the bottom of the screen
+			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
+		}
+		
 		// Draw the player
 		player->DrawFrame(buffer, mapxoff, mapyoff);
-//		draw_sprite(buffer, player_image[8], 
-//                player->getX(), player->getY());
-		//blit the double buffer 
-		if (spike->getY() != spikesY) {
-			printf("y Pos: %f\n", player->getY());
-			printf("spike x Pos: %f\n", spike->getX());
-			printf("spike y Pos: %f\n", spike->getY());
-			printf("spike width: %f\n", spike->getWidth());
-			printf("spike height: %f\n", spike->getHeight());
-			spike->setY(spikesY);
-//			drawHLineOfSprites(spike, buffer, WIDTH, spikesY);
-//			while (spike->getX() < WIDTH) {
-//				printf("x Pos: %f\n", spike->getX());				
-////				blit(spike->getImage(), buffer, 0, 0, spike->getX(), spike->getY(), spike->getWidth(), spike->getHeight());
-//				drawSprite(buffer, spike->getImage(), 0, BOTTOM + HEIGHT - 32);
-////				blit(spike->getImage(), buffer, 0, 0, spike->getX(), BOTTOM + HEIGHT - 32, 32, 32);
-//				spike->setX(spike->getX() + spike->getWidth());
-//			}
-//			spike->setX(0);
-			draw_sprite(spikeOverlay, spike->getImage(), WIDTH / 2, HEIGHT / 2);
-		}
-		blit(spikeOverlay, buffer, 0, mapyoff + HEIGHT / 2, 0, 0, WIDTH, HEIGHT);
+	
+		displayGameInformation(player, buffer);
 		vsync();
         acquire_screen();
 		blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
         release_screen();
+		
+		// Check if the bottom of the character has contacted the spikes
+		if (player->getY() + player->getHeight() >= spikesY) {
+			// Ensure spikes are drawn, to show death from the spikes properly, since the spikes update
+			// occur after spikes are drawn, but not draw the next level of spikes
+			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
+			blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
+			displayGameOverScreen();
+			while(!key[KEY_ESC]);
+		}
+		
 		if (key[KEY_ESC]) {
 			break;
 		}
