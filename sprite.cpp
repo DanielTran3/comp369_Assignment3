@@ -109,6 +109,9 @@ int Sprite::Collided(Sprite *other, int shrink) {
 	}
 }
 
+/*
+	Get collision with block
+*/
 int Sprite::CollideWithBlock(int x, int y)
 {
     BLKSTR *blockdata;

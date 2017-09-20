@@ -92,8 +92,8 @@ int collided(int x, int y)
 void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocation) {
 	int tempY = yLocation;
 	while (tempY < HEIGHT) {
-		for (int x = 0; x < xDistance; x += sprite->getWidth()) {
-			sprite->setX(x);
+		for (int x = 0; x < mapwidth; x++) {
+			sprite->setX(x * mapblockwidth);
 			sprite->setY(tempY);
 			sprite->Draw(dest);
 		}
@@ -175,8 +175,8 @@ int main(void) {
 	initializePlayer(player);
 
 	SpriteHandler *enemySpriteHandler = new SpriteHandler();
-	enemySpriteHandler->SpawnEnemies();
-	
+//	enemySpriteHandler->SpawnEnemies();
+	//enemySpriteHandler->GetPlatform(1493);
 	while(1) {
 		player->UpdateLevelReached();
 		player->PlayerControls();
