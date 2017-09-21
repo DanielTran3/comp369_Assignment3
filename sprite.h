@@ -2,11 +2,11 @@
 #define _SPRITE_H 1
 
 #define MAXJUMP 1600
-#define BOTTOM 48000
 
 #include <stdio.h>
 #include "allegro.h"
 #include "mappyal.h"
+#include "toTheTopDefs.h"
 
 class Sprite {
 	private:
@@ -42,10 +42,12 @@ class Sprite {
 		int PointInside(int px,int py);
 		int Collided(Sprite *other = NULL, int shrink = 5);
 		int CollideWithBlock(int x, int y);
+		int GetBlockData1(int x, int y);
 		double CenterX();
 		double CenterY();
 		void PlayerControls();
 		void UpdateLevelReached();
+		void Walk();
 		
 		int getAlive();
 		void setAlive(int alive);

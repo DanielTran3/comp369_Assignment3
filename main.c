@@ -4,7 +4,7 @@
 Sound *toTheTopSounds;
 volatile int spikesY = BOTTOM;
 volatile int timeElapsed = 0;
-
+int gameoverFlag = 0;
 /*
 	Update the level that the spikes are at
 */
@@ -29,7 +29,8 @@ void displayGameInformation(Sprite *player, BITMAP *dest) {
 	int xOffset = WIDTH / 2;
 	int yOffset = 5;
 	rectfill(dest, 0, 0, WIDTH, yOffset + 10, BLACK);
-	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Level Reached: %i", player->getLevelReached());
+	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Level Reached: %i       Spikes Level Reached: %i", 
+				  player->getLevelReached(), mapheight - spikesY / mapblockheight);
 	textprintf_ex(dest, font, WIDTH - 210, yOffset, WHITE, 0, "Time Elapsed: %i seconds", timeElapsed);
 	hline(dest, 0, yOffset + 10, WIDTH, WHITE);
 }
@@ -122,7 +123,7 @@ void initializePlayer(Sprite *player) {
 
 int main(void) {
 	int mapxoff, mapyoff;
-	
+	gameoverFlag = 0;
 	allegro_init();	
 	set_color_depth(24);
 	install_keyboard();
@@ -147,10 +148,10 @@ int main(void) {
 	
 	MapLoad("mappy/toTheTop.fmp");
 	
-	// Update the spike's location every 5 seconds to move up a level
+	// Update the spike's location every 3 seconds to move up a level
 	LOCK_VARIABLE(spikesY);
     LOCK_FUNCTION(update_deathSpikes);
-    install_int(update_deathSpikes, 5000);
+    install_int(update_deathSpikes, 3000);
     
     // Update the timer that the user is alive
 	LOCK_VARIABLE(timeElapsed);
@@ -175,11 +176,14 @@ int main(void) {
 	initializePlayer(player);
 
 	SpriteHandler *enemySpriteHandler = new SpriteHandler();
-//	enemySpriteHandler->SpawnEnemies();
+	enemySpriteHandler->SpawnEnemies();
 	//enemySpriteHandler->GetPlatform(1493);
 	while(1) {
 		player->UpdateLevelReached();
 		player->PlayerControls();
+		if (player->GetBlockData1(player->getX(), player->getY()) == 1) {
+			gameoverFlag = 1;
+		}
 		//update the map scroll position
 		mapxoff = WIDTH / 2;
 		mapyoff = player->getY() - HEIGHT / 2;
@@ -203,15 +207,18 @@ int main(void) {
 		// If mapyoff + HEIGHT (Bottom of the screen) > spikesY, then the spikes should be
 		// displayed on the screen.
 		if (mapyoff + HEIGHT > spikesY) {
-			printf("SPIKES START: %i\n", spikesY - mapyoff);
-			printf("DIFF: %f\n", player->getY() - spikesY);
+//			printf("SPIKES START: %i\n", spikesY - mapyoff);
+//			printf("DIFF: %f\n", player->getY() - spikesY);
 			// Display spikes from HEIGHT - (mapyoff + HEIGHT - spikesY) to the bottom of the screen
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
 		}
 		
+		// Draws Enemy and checks for player collision with enemy
+		if (enemySpriteHandler->DrawEnemies(buffer, mapyoff, mapxoff, mapyoff, player)) {
+			gameoverFlag = 1;
+		}
 		// Draw the player
 		player->DrawFrame(buffer, mapxoff, mapyoff);
-	
 		displayGameInformation(player, buffer);
 		vsync();
         acquire_screen();
@@ -220,6 +227,10 @@ int main(void) {
 		
 		// Check if the bottom of the character has contacted the spikes
 		if (player->getY() + player->getHeight() >= spikesY) {
+			gameoverFlag = 1;
+		}
+		
+		if (gameoverFlag) {
 			// Ensure spikes are drawn, to show death from the spikes properly, since the spikes update
 			// occur after spikes are drawn, but not draw the next level of spikes
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);

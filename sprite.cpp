@@ -120,6 +120,13 @@ int Sprite::CollideWithBlock(int x, int y)
 //	printf("x: %i  y: %i\n", x, y);
 	return blockdata->tl;
 }
+int Sprite::GetBlockData1(int x, int y) {
+    BLKSTR *blockdata;
+	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
+	printf("Block: %i\n", blockdata->user1);
+
+	return blockdata->user1;	
+}
 
 double Sprite::CenterX() {
 	return _x + (_width / 2);
@@ -144,7 +151,7 @@ void Sprite::PlayerControls() {
     }
     else if (key[KEY_LEFT]) 
     { 
-        _direction = 0; 
+        _direction = -1; 
         _x -= 2; 
         _framesStart = 4;
         _framesEnd = 7;
@@ -159,7 +166,7 @@ void Sprite::PlayerControls() {
             _jump = 0;
 
 	    if (key[KEY_SPACE]) {
-	    	_jump = 22;
+	    	_jump = 21;
 		}
     }
     else
@@ -171,27 +178,37 @@ void Sprite::PlayerControls() {
 	if (_jump < 0) 
     { 
         if (CollideWithBlock(_x + _width / 2, _y + _height))
-		{ 
-			_jump = MAXJUMP;
-
-			// After landing, fix height so there is no more collision
-            while (CollideWithBlock(_x + _width / 2, _y + _height)) {
-            	_y -= 1;
+		{
+			if (GetBlockData1(_x + _width / 2, _y + _height) == 1) {
+				gameoverFlag = 1;
+			}
+			else {
+				_jump = MAXJUMP;
+	
+				// After landing, fix height so there is no more collision
+	            while (CollideWithBlock(_x + _width / 2, _y + _height)) {
+	            	_y -= 1;
+				}	
 			}
         } 
     }
-
+    
     //check for collided with foreground tiles
-	if (!_direction) 
-    { 
-        if (CollideWithBlock(_x, _y + _height)) 
-            _x = oldpx; 
+	if (_direction == -1) 
+    {
+        if (CollideWithBlock(_x, _y + _height) && (GetBlockData1(_x, _y + _height) != 1)) {
+        	_x = oldpx;	
+		}
     }
 	else 
     { 
-        if (CollideWithBlock(_x + _width, _y + _height)) 
-            _x = oldpx; 
+        if (CollideWithBlock(_x + _width, _y + _height) && (GetBlockData1(_x + _width, _y + _height) != 1)) {
+        	_x = oldpx;
+		}
     }
+	if (GetBlockData1(_x + _width / 2, _y + _height / 2) == 1) {
+		gameoverFlag = 1;
+	}
 }
 
 void Sprite::UpdateLevelReached() {
@@ -202,6 +219,28 @@ void Sprite::UpdateLevelReached() {
 	Method that moves a sprite left and right ontop of a tile platform.
 	Performs collision check to see if another sprite has collided with it.
 */
+void Sprite::Walk() {
+	// Save old position and update sprite position
+	int oldX = _x;
+	int oldY = _y;
+	UpdatePosition();
+	// Test for collision below sprite and sprite in front of sprite
+	if (!CollideWithBlock(_x, _y + _height) || CollideWithBlock(_x, _y)) {
+		_direction *= -1;
+		_x = oldX;
+		_y = oldY;
+		UpdatePosition();
+	}
+	if (_direction == 1) {
+		_framesStart = 5;
+        _framesEnd = 9;
+	}
+	if (_direction == -1) {
+		_framesStart = 0;
+        _framesEnd = 4;
+	}
+	UpdateAnimation();
+}
 
 int Sprite::getAlive() {
 	return _alive;
@@ -323,7 +362,7 @@ int Sprite::getLevelReached() {
 double Sprite::getX() {
 	return _x;
 }
-void Sprite::setX(double x ) {
+void Sprite::setX(double x) {
 	_x = x;
 }
 double Sprite::getY() {

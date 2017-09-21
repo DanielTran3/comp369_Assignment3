@@ -5,13 +5,10 @@
 #include "sprite.h"
 #include "sound.h"
 #include "spritehandler.h"
+#include "toTheTopDefs.h"
 
 #define MODE_W GFX_AUTODETECT_WINDOWED
 #define MODE_F GFX_AUTODETECT_FULLSCREEN
-
-#define WIDTH 640
-#define HEIGHT 480
-#define BOTTOM 48000
 
 #define CHARACTER_WIDTH 8
 #define LINE_SPACING 10

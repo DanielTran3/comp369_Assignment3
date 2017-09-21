@@ -1,9 +1,10 @@
 #pragma once
 
 #include "sprite.h"
+#include "toTheTopDefs.h"
+
 #define MAX_ENEMIES 4800
 #define PLATFORM_LENGTH 2
-#define TOP_LEVEL 0
 #define ENEMY "mappy/enemy.bmp"
 
 class SpriteHandler {
@@ -15,6 +16,7 @@ class SpriteHandler {
 		SpriteHandler(void);
 		~SpriteHandler(void);
 		void AddEnemy(int spawningLevel, int xTile);
+		int DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player);
 		int GetPlatform(int level);
 		void SpawnEnemies(void);
 		void Create();
