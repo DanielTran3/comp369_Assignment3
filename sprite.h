@@ -48,6 +48,7 @@ class Sprite {
 		void PlayerControls();
 		void UpdateLevelReached();
 		void Walk();
+		void Move();
 		
 		int getAlive();
 		void setAlive(int alive);

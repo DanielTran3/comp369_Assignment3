@@ -108,7 +108,8 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 void initializePlayer(Sprite *player) {
 	player->Load("mappy/player.bmp");
 	player->setX(WIDTH / 2);
-	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
+//	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
+	player->setY((1345 * mapblockheight) - player->getHeight() - mapblockheight - 1);
 	player->setWidth(32);
 	player->setHeight(32);
 	player->setAnimColumns(11);
@@ -120,9 +121,11 @@ void initializePlayer(Sprite *player) {
 	player->setVelY(5);
 }
 
-
 int main(void) {
 	int mapxoff, mapyoff;
+	int spikeTimer = 3000;
+	int spikeYThreshold = 1425;
+	int cloudPlatformsStartingLevel = 1340;
 	gameoverFlag = 0;
 	allegro_init();	
 	set_color_depth(24);
@@ -151,36 +154,57 @@ int main(void) {
 	// Update the spike's location every 3 seconds to move up a level
 	LOCK_VARIABLE(spikesY);
     LOCK_FUNCTION(update_deathSpikes);
-    install_int(update_deathSpikes, 3000);
+    install_int(update_deathSpikes, spikeTimer);
     
     // Update the timer that the user is alive
 	LOCK_VARIABLE(timeElapsed);
 	LOCK_FUNCTION(update_time);
 	install_int(update_time, 1000);
 	
+	// Initialize Spike Sprite
 	Sprite *spike = new Sprite();
 	ret = spike->Load(SPIKE_BMP);
 	
 	if (ret == 0) {
 		allegro_message("Error loading mappy/deathSpike.bmp");
+		return 1;
 	}
 	spike->setWidth(32);
 	spike->setHeight(32);
 	spike->setX(0);
 	spike->setY(spikesY);
 	
-//	BITMAP *spikeOverlay = create_bitmap(WIDTH, BOTTOM);
-//	clear_bitmap(spikeOverlay);
-	
+	// Initialize Player
 	Sprite *player = new Sprite();
 	initializePlayer(player);
 
-	SpriteHandler *enemySpriteHandler = new SpriteHandler();
-	enemySpriteHandler->SpawnEnemies();
-	//enemySpriteHandler->GetPlatform(1493);
+	// Initialize Enemies in a enemyHandler
+	EnemyHandler *enemyHandler = new EnemyHandler();
+	enemyHandler->SpawnEnemies();
+
+	// Initialize Moving Platforms in the Cave
+	int movingSpeed = 0;
+	Platform *cloudPlatforms = new Platform();
+	while (cloudPlatforms->getNumPlatforms() < NUM_PLATFORMS) {
+		// Platforms move between 1 to 10 in speed
+		movingSpeed = 1 + rand() % 10;
+		cloudPlatforms->CreatePlatform(mapblockwidth, cloudPlatformsStartingLevel * mapblockheight, movingSpeed, 0);
+		cloudPlatformsStartingLevel += 2 * mapblockheight;
+	}
 	while(1) {
 		player->UpdateLevelReached();
 		player->PlayerControls();
+		
+		// Update the spike's timer and threshold if the current threshold is passed.
+		if (player->getY() < (spikeYThreshold * mapblockheight)) {
+			if (spikeTimer > 1) {
+				spikeYThreshold -= 75;
+				spikeTimer -= 1000;
+			    install_int(update_deathSpikes, spikeTimer);
+			}
+		}
+		
+		// See if player contacts a deadly block
 		if (player->GetBlockData1(player->getX(), player->getY()) == 1) {
 			gameoverFlag = 1;
 		}
@@ -213,8 +237,11 @@ int main(void) {
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
 		}
 		
+		// Draw the platforms if they are in range
+		cloudPlatforms->DrawPlatforms(buffer, mapyoff, mapxoff, mapyoff, player);
+		
 		// Draws Enemy and checks for player collision with enemy
-		if (enemySpriteHandler->DrawEnemies(buffer, mapyoff, mapxoff, mapyoff, player)) {
+		if (enemyHandler->DrawEnemies(buffer, mapyoff, mapxoff, mapyoff, player)) {
 			gameoverFlag = 1;
 		}
 		// Draw the player

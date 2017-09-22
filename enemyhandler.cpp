@@ -1,11 +1,11 @@
-#include "spritehandler.h"
+#include "enemyhandler.h"
 
-SpriteHandler::SpriteHandler(void)
+EnemyHandler::EnemyHandler(void)
 {
 	_count = 0;
 }
 
-SpriteHandler::~SpriteHandler(void)
+EnemyHandler::~EnemyHandler(void)
 {
     //delete the sprites
 	for (int n = 0; n < _count; n++)
@@ -15,7 +15,7 @@ SpriteHandler::~SpriteHandler(void)
 /*
 	Add a sprite to the sprite handler
 */
-void SpriteHandler::AddEnemy(int spawningLevel, int xTile) 
+void EnemyHandler::AddEnemy(int spawningLevel, int xTile) 
 {	
 	if (_count < MAX_ENEMIES) {
 		_sprites[_count] = new Sprite();
@@ -39,12 +39,12 @@ void SpriteHandler::AddEnemy(int spawningLevel, int xTile)
 /*
 	Draws enemies that would be visible on the screen
 */
-int SpriteHandler::DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player) {
+int EnemyHandler::DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player) {
 	int collideWithPlayer = 0;
 	for (int i = 0; i < _count; i++) {
 		if ((_sprites[i]->getY() > topOfScreen) && (_sprites[i]->getY() < (topOfScreen + HEIGHT))) {
 			_sprites[i]->Walk();
-			printf("Drawing enemy #%i\n", i);
+//			printf("Drawing enemy #%i\n", i);
 			_sprites[i]->DrawFrame(dest, xOffset, yOffset);
 			
 			// Check for player collision. Done in this function to reduce number of iterations over all enemies
@@ -70,7 +70,7 @@ int CollideWithBlock(int x, int y)
 	Gets a platform (defined as a specified number of foreground (collidable) tiles in a row)
 	Returns a position where sprite can be placed ontop of, or -1 if no platform was founda the 
 */
-int SpriteHandler::GetPlatform(int level) {
+int EnemyHandler::GetPlatform(int level) {
 	int endingPlatformTile = 0;
 	int tileCount = 0;
 	
@@ -81,21 +81,21 @@ int SpriteHandler::GetPlatform(int level) {
 			endingPlatformTile = i;
 			// Increase the tile count
 			if (++tileCount > PLATFORM_LENGTH) {
-//				break;
+				break;
 			}
-			printf("level: %i\n", level);
-			printf("endingPlatformTile: %i\n", endingPlatformTile);
-			printf("tileCount: %i\n", tileCount);
+			//printf("level: %i\n", level);
+			//printf("endingPlatformTile: %i\n", endingPlatformTile);
+			//printf("tileCount: %i\n", tileCount);
 		}
 		else {
 			tileCount = 0;
 		}
 	}
-	printf("return: %i\n", tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1);
+	//printf("return: %i\n", tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1);
 	return tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1;
 }
 
-//void SpriteHandler::SpawnEnemies() {
+//void EnemyHandler::SpawnEnemies() {
 //	// mapheight - 2 is the level above the starting ground level
 //	int spawningLevel = mapheight - 1;
 //	int randomLevel = 0;
@@ -116,7 +116,7 @@ int SpriteHandler::GetPlatform(int level) {
 //}
 
 
-void SpriteHandler::SpawnEnemies() {
+void EnemyHandler::SpawnEnemies() {
 	// mapheight - 2 is the level above the starting ground level
 	int spawningLevel = mapheight - 1;
 	int randomLevel = 0;
@@ -125,8 +125,8 @@ void SpriteHandler::SpawnEnemies() {
 	Sprite *enemy = new Sprite();
 	enemy->Load(ENEMY);
 	while (spawningLevel > TOP_LEVEL) {
-		// Spawn an enemy every 10 levels
-		spawningLevel -= rand() % 10;
+		// Spawn an enemy every 8 levels
+		spawningLevel -= rand() % 8;
 		
 		// Only spawn an enemy where there are 3 or more tiles.
 		// Don't spawn above level 0. This condition in the while is present for the case where
@@ -137,12 +137,13 @@ void SpriteHandler::SpawnEnemies() {
 			// If no surface is found, then move up a level
 			if (platformEndingTile == -1) {
 				spawningLevel -= 1;
+				printf("None LEVEL: %i\n", spawningLevel);
 				continue;			
 			}
 			
 			// Location has been found, break and move onto the next 10 levels			
 			else {
-				printf("FOUND\n");
+				printf("FOUND LEVEL: %i\n", spawningLevel);
 				// Move spawningLevel up one to spawn enemy ontop of the level we found
 				spawningLevel -= 1;
 				// Spawn at the ending location
@@ -156,7 +157,7 @@ void SpriteHandler::SpawnEnemies() {
 /*
 	Create a sprite
 */
-void SpriteHandler::Create() 
+void EnemyHandler::Create() 
 {
 	_sprites[_count] = new Sprite();
 	_count++;
@@ -165,7 +166,7 @@ void SpriteHandler::Create()
 /*
 	Retrieve a sprite
 */
-Sprite *SpriteHandler::Get(int index)
+Sprite *EnemyHandler::Get(int index)
 {
 	return _sprites[index];
 }
@@ -173,6 +174,6 @@ Sprite *SpriteHandler::Get(int index)
 /*
 	Get the number of sprites in the sprite handler
 */
-int SpriteHandler::Size() {
+int EnemyHandler::Size() {
 	return _count;
 }

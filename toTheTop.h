@@ -4,7 +4,8 @@
 #include <allegro.h>
 #include "sprite.h"
 #include "sound.h"
-#include "spritehandler.h"
+#include "enemyhandler.h"
+#include "platform.h"
 #include "toTheTopDefs.h"
 
 #define MODE_W GFX_AUTODETECT_WINDOWED

@@ -123,7 +123,7 @@ int Sprite::CollideWithBlock(int x, int y)
 int Sprite::GetBlockData1(int x, int y) {
     BLKSTR *blockdata;
 	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
-	printf("Block: %i\n", blockdata->user1);
+	//printf("Block: %i\n", blockdata->user1);
 
 	return blockdata->user1;	
 }
@@ -240,6 +240,24 @@ void Sprite::Walk() {
         _framesEnd = 4;
 	}
 	UpdateAnimation();
+}
+
+/*
+	Method that moves a sprite and checks for collisions
+*/
+void Sprite::Move() {
+	// Save old position and update sprite position
+	int oldX = _x;
+	int oldY = _y;
+	UpdatePosition();
+	// Test for collision below sprite and sprite in front of sprite
+	if (!CollideWithBlock(_x, _y + _height) || CollideWithBlock(_x, _y)) {
+		_direction *= -1;
+		_x = oldX;
+		_y = oldY;
+		UpdatePosition();
+	}
+
 }
 
 int Sprite::getAlive() {

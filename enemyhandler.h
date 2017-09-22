@@ -7,14 +7,14 @@
 #define PLATFORM_LENGTH 2
 #define ENEMY "mappy/enemy.bmp"
 
-class SpriteHandler {
+class EnemyHandler {
 	private:
 		int _count;
 		Sprite *_sprites[MAX_ENEMIES];
 	
 	public:
-		SpriteHandler(void);
-		~SpriteHandler(void);
+		EnemyHandler(void);
+		~EnemyHandler(void);
 		void AddEnemy(int spawningLevel, int xTile);
 		int DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player);
 		int GetPlatform(int level);
