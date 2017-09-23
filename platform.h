@@ -16,7 +16,8 @@ class Platform {
 		~Platform();
 		
 		void CreatePlatform(int xLoc, int yLoc, double xSpeed, double ySpeed);
-		int DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player);
+		void DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player);
+		void CollideWithTop(Sprite *player, Sprite *platform);
 		Sprite *GetPlatform(int index);
 				
 		int getNumPlatforms();

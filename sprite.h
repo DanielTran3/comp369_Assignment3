@@ -1,8 +1,6 @@
 #ifndef _SPRITE_H
 #define _SPRITE_H 1
 
-#define MAXJUMP 1600
-
 #include <stdio.h>
 #include "allegro.h"
 #include "mappyal.h"
@@ -34,7 +32,7 @@ class Sprite {
 		~Sprite();
 		
 		int Load(const char *filename);
-		void Draw(BITMAP *dest);
+		void Draw(BITMAP *dest, int xOffset, int yOffset);
 		void DrawFrame(BITMAP *dest, int xOffset, int yOffset);
 		void UpdatePosition();
 		void UpdateAnimation();

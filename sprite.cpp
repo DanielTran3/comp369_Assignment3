@@ -46,8 +46,8 @@ int Sprite::Load(const char *filename) {
 	return 1;
 }
 
-void Sprite::Draw(BITMAP *dest) {
-	draw_sprite(dest, _image, (int) _x, (int) _y);
+void Sprite::Draw(BITMAP *dest, int xOffset, int yOffset) {
+	draw_sprite(dest, _image, (int) _x - xOffset, (int) _y - yOffset);
 }
 
 void Sprite::DrawFrame(BITMAP *dest, int xOffset, int yOffset) {
@@ -102,7 +102,7 @@ int Sprite::Collided(Sprite *other, int shrink) {
 		Inside((int) _x, heightA, (int) other->getX() + shrink, (int) other->getY() + shrink, widthB - shrink, heightB - shrink) ||
         Inside(widthA, (int) _y, (int) other->getX() + shrink, (int) other->getY() + shrink, widthB - shrink, heightB - shrink) ||
         Inside(widthA, heightA, (int) other->getX() + shrink, (int) other->getY() + shrink, widthB - shrink, heightB - shrink)) {
-        	return 1;
+			return 1;
 	}
 	else {
 		return 0;
@@ -224,8 +224,10 @@ void Sprite::Walk() {
 	int oldX = _x;
 	int oldY = _y;
 	UpdatePosition();
-	// Test for collision below sprite and sprite in front of sprite
-	if (!CollideWithBlock(_x, _y + _height) || CollideWithBlock(_x, _y)) {
+	// Test for collision below sprite (there must be a block below the sprite in order for
+	// it to be able to walk, and check for no collision to the left and right of the sprite to the left 
+	if (!CollideWithBlock(_x, _y + _height) || !CollideWithBlock(_x + _width - 1, _y + _height) || 
+		CollideWithBlock(_x + _width + 1, _y) || CollideWithBlock(_x - 1, _y)) {
 		_direction *= -1;
 		_x = oldX;
 		_y = oldY;
@@ -251,7 +253,8 @@ void Sprite::Move() {
 	int oldY = _y;
 	UpdatePosition();
 	// Test for collision below sprite and sprite in front of sprite
-	if (!CollideWithBlock(_x, _y + _height) || CollideWithBlock(_x, _y)) {
+	if (CollideWithBlock(_x + _width + 1, _y) || CollideWithBlock(_x - 1, _y)) {
+		printf("COLLIDED\n");
 		_direction *= -1;
 		_x = oldX;
 		_y = oldY;

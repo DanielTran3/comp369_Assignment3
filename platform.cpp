@@ -18,7 +18,7 @@ void Platform::CreatePlatform(int xLoc, int yLoc, double xSpeed, double ySpeed) 
 		_platforms[_numPlatforms]->setAnimColumns(0);
 		_platforms[_numPlatforms]->setFrameDelay(0);
 		_platforms[_numPlatforms]->setTotalFrames(0);
-		_platforms[_numPlatforms]->setXDelay(3);
+		_platforms[_numPlatforms]->setXDelay(1);
 		_platforms[_numPlatforms]->setYDelay(3);
 		_platforms[_numPlatforms]->setVelX(xSpeed);
 		_platforms[_numPlatforms]->setVelY(ySpeed);
@@ -29,19 +29,28 @@ void Platform::CreatePlatform(int xLoc, int yLoc, double xSpeed, double ySpeed) 
 /*
 	Draws a platform if it is in the player's view and also checks with collision with the player
 */
-int Platform::DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player) {
-	int collideWithPlayer = 0;
+void Platform::DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOffset, Sprite *player) {
 	for (int i = 0; i < _numPlatforms; i++) {
 		if ((_platforms[i]->getY() > topOfScreen) && (_platforms[i]->getY() < (topOfScreen + HEIGHT))) {
 			_platforms[i]->Move();
-			printf("platform x: %f\n", _platforms[i]->getX());
-			printf("platform y: %f\n", _platforms[i]->getY());
+			_platforms[i]->Draw(dest, xOffset, yOffset);
+//			printf("Platform Number: %i\n", i);
+//			printf("platform y: %f\n", _platforms[i]->getY());
 			
 			// Check for player collision. Done in this function to reduce number of iterations over all enemies
-			collideWithPlayer = player->Collided(_platforms[i], 0);
+			CollideWithTop(player, _platforms[i]);
+			gameoverFlag = 0;
 		}
 	}
-	return collideWithPlayer;
+}
+
+void Platform::CollideWithTop(Sprite *player, Sprite *platform) {
+	if (platform->PointInside(player->getX() + player->getWidth() / 2, player->getY() + player->getHeight()))
+	{
+		printf("CONTACTED");
+		player->setJump(MAXJUMP);
+		player->setY(platform->getY() - player->getHeight());
+	}
 }
 
 Sprite *Platform::GetPlatform(int index) {

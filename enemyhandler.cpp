@@ -30,7 +30,7 @@ void EnemyHandler::AddEnemy(int spawningLevel, int xTile)
 		_sprites[_count]->setTotalFrames(10);
 		_sprites[_count]->setXDelay(1);
 		_sprites[_count]->setYDelay(0);
-		_sprites[_count]->setVelX(-3);
+		_sprites[_count]->setVelX(-2);
 		_sprites[_count]->setVelY(0);
 		_count++;
 	}
@@ -48,7 +48,9 @@ int EnemyHandler::DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yO
 			_sprites[i]->DrawFrame(dest, xOffset, yOffset);
 			
 			// Check for player collision. Done in this function to reduce number of iterations over all enemies
-			collideWithPlayer = player->Collided(_sprites[i], 0);
+			if (collideWithPlayer != 1) {
+				collideWithPlayer = player->Collided(_sprites[i], 0);
+			}
 		}
 	}
 	return collideWithPlayer;
@@ -95,37 +97,16 @@ int EnemyHandler::GetPlatform(int level) {
 	return tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1;
 }
 
-//void EnemyHandler::SpawnEnemies() {
-//	// mapheight - 2 is the level above the starting ground level
-//	int spawningLevel = mapheight - 1;
-//	int randomLevel = 0;
-//	int platformEndingTile = 0;
-//	
-//	Sprite *enemy = new Sprite();
-//	enemy->Load(ENEMY);
-//		
-//	// Only spawn an enemy where there are 3 or more tiles.
-//	// Don't spawn above level 0. This condition in the while is present for the case where
-//	// A level wasn't found and we try moving up more levels one at a time.
-//	platformEndingTile = GetPlatform(spawningLevel);
-//
-//	// If no surface is found, then move up a level
-//	if (platformEndingTile != -1) {
-//		AddEnemy(spawningLevel - 1, platformEndingTile);
-//	}
-//}
-
-
 void EnemyHandler::SpawnEnemies() {
 	// mapheight - 2 is the level above the starting ground level
-	int spawningLevel = mapheight - 1;
+	int spawningLevel = mapheight - 2;
 	int randomLevel = 0;
 	int platformEndingTile = 0;
 	
 	Sprite *enemy = new Sprite();
 	enemy->Load(ENEMY);
 	while (spawningLevel > TOP_LEVEL) {
-		// Spawn an enemy every 8 levels
+		// Spawn an enemy randomly between 8 levels
 		spawningLevel -= rand() % 8;
 		
 		// Only spawn an enemy where there are 3 or more tiles.
@@ -146,8 +127,9 @@ void EnemyHandler::SpawnEnemies() {
 				printf("FOUND LEVEL: %i\n", spawningLevel);
 				// Move spawningLevel up one to spawn enemy ontop of the level we found
 				spawningLevel -= 1;
-				// Spawn at the ending location
-				AddEnemy(spawningLevel, platformEndingTile);
+				// Spawn at the ending location -1 to reduce glitches with sprite being caught
+				// between the side wall block
+				AddEnemy(spawningLevel, platformEndingTile - 1);
 				break;
 			}
 		}

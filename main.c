@@ -10,7 +10,7 @@ int gameoverFlag = 0;
 */
 void update_deathSpikes(void) {
 	spikesY -= mapblockheight;
-	printf("UPDATING SPIKES: %i\n", spikesY);
+//	printf("UPDATING SPIKES: %i\n", spikesY);
 }
 END_OF_FUNCTION(update_deathSpikes)
 
@@ -96,7 +96,7 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 		for (int x = 0; x < mapwidth; x++) {
 			sprite->setX(x * mapblockwidth);
 			sprite->setY(tempY);
-			sprite->Draw(dest);
+			sprite->Draw(dest, 0, 0);
 		}
 		tempY += sprite->getHeight();
 	}
@@ -106,12 +106,12 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 	Function to initialize the player's starting position and settings;
 */
 void initializePlayer(Sprite *player) {
-	player->Load("mappy/player.bmp");
+	player->Load("mappy/player2.bmp");
 	player->setX(WIDTH / 2);
 //	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
-	player->setY((1345 * mapblockheight) - player->getHeight() - mapblockheight - 1);
-	player->setWidth(32);
-	player->setHeight(32);
+	player->setY((1294 * mapblockheight) - player->getHeight() - mapblockheight - 1);
+	player->setWidth(24);
+	player->setHeight(22);
 	player->setAnimColumns(11);
 	player->setCurFrame(8);
 	player->setFrameDelay(10);
@@ -121,11 +121,13 @@ void initializePlayer(Sprite *player) {
 	player->setVelY(5);
 }
 
+// BLOCK 463 IS BG BLOCK 465 IS FG
 int main(void) {
 	int mapxoff, mapyoff;
 	int spikeTimer = 3000;
 	int spikeYThreshold = 1425;
-	int cloudPlatformsStartingLevel = 1340;
+	int cloudPlatformsStartingLevel = 1313;
+	
 	gameoverFlag = 0;
 	allegro_init();	
 	set_color_depth(24);
@@ -186,10 +188,11 @@ int main(void) {
 	int movingSpeed = 0;
 	Platform *cloudPlatforms = new Platform();
 	while (cloudPlatforms->getNumPlatforms() < NUM_PLATFORMS) {
-		// Platforms move between 1 to 10 in speed
-		movingSpeed = 1 + rand() % 10;
-		cloudPlatforms->CreatePlatform(mapblockwidth, cloudPlatformsStartingLevel * mapblockheight, movingSpeed, 0);
-		cloudPlatformsStartingLevel += 2 * mapblockheight;
+		// Platforms move between 1 to 2 in speed
+		movingSpeed = 1 + rand() % 2;
+		
+		cloudPlatforms->CreatePlatform(mapblockwidth + rand() % (WIDTH - 3 * mapblockwidth), cloudPlatformsStartingLevel * mapblockheight, movingSpeed, 0);
+		cloudPlatformsStartingLevel -= 2;
 	}
 	while(1) {
 		player->UpdateLevelReached();
@@ -200,7 +203,7 @@ int main(void) {
 			if (spikeTimer > 1) {
 				spikeYThreshold -= 75;
 				spikeTimer -= 1000;
-			    install_int(update_deathSpikes, spikeTimer);
+		    	install_int(update_deathSpikes, spikeTimer);
 			}
 		}
 		
@@ -208,6 +211,12 @@ int main(void) {
 		if (player->GetBlockData1(player->getX(), player->getY()) == 1) {
 			gameoverFlag = 1;
 		}
+		
+		// If the player reaches touches the block that has userdata1 with a value 2, they win
+		if (player->GetBlockData1(player->getX(), player->getY()) == 2) {
+			gameoverFlag = -1;
+		}
+		
 		//update the map scroll position
 		mapxoff = WIDTH / 2;
 		mapyoff = player->getY() - HEIGHT / 2;
@@ -257,13 +266,17 @@ int main(void) {
 			gameoverFlag = 1;
 		}
 		
-		if (gameoverFlag) {
+		if (gameoverFlag == 1) {
 			// Ensure spikes are drawn, to show death from the spikes properly, since the spikes update
 			// occur after spikes are drawn, but not draw the next level of spikes
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
 			blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
 			displayGameOverScreen();
 			while(!key[KEY_ESC]);
+		}
+		
+		if (gameoverFlag == -1) {
+			displayGameOverScreen();
 		}
 		
 		if (key[KEY_ESC]) {

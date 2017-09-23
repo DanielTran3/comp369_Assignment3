@@ -29,7 +29,7 @@ IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=4
 CompilerSettings=0000000100000000001000000
-UnitCount=10
+UnitCount=12
 
 [VersionInfo]
 Major=1
@@ -121,7 +121,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit8]
-FileName=spritehandler.cpp
+FileName=enemyhandler.cpp
 CompileCpp=1
 Folder=
 Compile=1
@@ -131,7 +131,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit9]
-FileName=spritehandler.h
+FileName=enemyhandler.h
 CompileCpp=1
 Folder=
 Compile=1
@@ -142,6 +142,26 @@ BuildCmd=
 
 [Unit10]
 FileName=toTheTopDefs.h
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit11]
+FileName=platform.cpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit12]
+FileName=platform.h
 CompileCpp=1
 Folder=
 Compile=1
