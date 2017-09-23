@@ -1,9 +1,6 @@
 #ifndef _SPRITE_H
 #define _SPRITE_H 1
 
-#include <stdio.h>
-#include "allegro.h"
-#include "mappyal.h"
 #include "toTheTopDefs.h"
 
 class Sprite {
@@ -43,7 +40,7 @@ class Sprite {
 		int GetBlockData1(int x, int y);
 		double CenterX();
 		double CenterY();
-		void PlayerControls();
+		void PlayerControls(Sound *sounds);
 		void UpdateLevelReached();
 		void Walk();
 		void Move();

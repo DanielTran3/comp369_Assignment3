@@ -1,9 +1,7 @@
 #ifndef _TOTHETOP_H
 #define _TOTHETOP_H
 
-#include <allegro.h>
 #include "sprite.h"
-#include "sound.h"
 #include "enemyhandler.h"
 #include "platform.h"
 #include "toTheTopDefs.h"
@@ -14,14 +12,13 @@
 #define CHARACTER_WIDTH 8
 #define LINE_SPACING 10
 
-#define HELP_SCREEN "images/help.bmp"
-#define TITLE_BACKGROUND "images/title.pcx"
-#define INSTRUCTIONS_BACKGROUND "images/instructions.pcx"
-#define LEVELS_BACKGROUND "images/levels.pcx"
-#define BACKGROUND "images/background_1.pcx"
-#define GAMEOVER_BACKGROUND "images/ending.pcx"
+#define TITLE_BACKGROUND "backgrounds/TitleBackground.pcx"
+#define INSTRUCTIONS_BACKGROUND "backgrounds/InstructionsBackground.pcx"
+#define WIN_BACKGROUND "backgrounds/WinBackground.pcx"
 
 #define SPIKE_BMP "mappy/deathSpike.bmp"
+
+#define MAP "mappy/toTheTop.fmp"
 
 #define WHITE makecol(255, 255, 255)
 #define BLACK makecol(0, 0, 0)

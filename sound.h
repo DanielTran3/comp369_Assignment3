@@ -1,12 +1,12 @@
 #ifndef _SOUND_H
-#include <allegro.h>
+
+#include "allegro.h"
 #include <string>
 
-#define HARDLINE_BGM "sounds/hardline_bgm.wav"
-#define HIT_SFX "sounds/hit_sfx.wav"
-#define LEVELUP_SFX "sounds/levelup_sfx.wav"
-#define PAUSE_SFX "sounds/pause_sfx.wav"
-#define GAMEOVER_SFX "sounds/gameover_sfx.wav"
+#define BGM_TOTHETOP "sounds/BGM_Epic.wav"
+#define SFX_JUMP "sounds/SFX_Jump.wav"
+#define SFX_DEATH "sounds/SFX_Death.wav"
+#define SFX_SPIKES "sounds/SFX_Spikes.wav"
 
 class Sound {
 	private:

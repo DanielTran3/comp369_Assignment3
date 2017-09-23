@@ -136,7 +136,7 @@ double Sprite::CenterY() {
 	return _y + (_height / 2);
 }
 
-void Sprite::PlayerControls() {
+void Sprite::PlayerControls(Sound *sounds) {
 	
 	int oldpy = _y; 
     int oldpx = _x;
@@ -166,6 +166,8 @@ void Sprite::PlayerControls() {
             _jump = 0;
 
 	    if (key[KEY_SPACE]) {
+	    	sounds->setSoundEffect(SFX_JUMP);
+	    	sounds->playSoundEffect();
 	    	_jump = 21;
 		}
     }

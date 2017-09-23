@@ -1,6 +1,13 @@
 #ifndef _TOTHETOPDEFS_H
 #define _TOTHETOPDEFS_H
 
+// Includes general definitions and includes
+
+#include <allegro.h>
+#include "mappyal.h"
+#include "sound.h"
+#include <string>
+
 #define WIDTH 640
 #define HEIGHT 480
 #define BOTTOM 48000

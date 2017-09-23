@@ -8,15 +8,15 @@ Sound::Sound() {
 	_volume = 128;
 	
 	// Load the background music and play it on start
-	_bgm = load_sample(HARDLINE_BGM);
+	_bgm = load_sample(BGM_TOTHETOP);
 	if (!_bgm) {
 		allegro_message("Error Loading Background Music");
 	}
 	playMusic();
 	
 	// Load up a sounds for _soundEffect
-	_soundEffectTitle = HIT_SFX;
-	_soundEffect = load_sample(HIT_SFX);
+	_soundEffectTitle = SFX_JUMP;
+	_soundEffect = load_sample(SFX_JUMP);
 	if (!_soundEffect) {
 		allegro_message("Error Loading Correct Sound Effect");
 	}
@@ -73,6 +73,7 @@ void Sound::PollTurnOnOrOffMusic() {
 		updateSound(_bgm);
 		rest(10);
 		clear_keybuf();
+		rest(10);
 	}
 }
 

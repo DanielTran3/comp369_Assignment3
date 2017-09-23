@@ -2,6 +2,8 @@
 #include "toTheTop.h"
 
 Sound *toTheTopSounds;
+
+int oldSpikesY = BOTTOM;
 volatile int spikesY = BOTTOM;
 volatile int timeElapsed = 0;
 int gameoverFlag = 0;
@@ -23,6 +25,130 @@ void update_time(void) {
 END_OF_FUNCTION(update_time);
 
 /*
+	Draws a fullscreen image given the filename input. Generally used to display a background image
+*/
+void drawImage(const char * filename) {
+	BITMAP *image;
+	image = load_bitmap(filename, NULL);
+	if (!image) {
+		allegro_message("Error Loading %s", filename);
+	}
+	
+	blit(image, screen, 0, 0, 0, 0, WIDTH, HEIGHT);
+	destroy_bitmap(image);
+}
+
+/*
+	Draws a fullscreen image from an input file onto a bitmap.
+*/
+void drawImage(const char * filename, BITMAP *bitmap) {
+	BITMAP *image;
+	image = load_bitmap(filename, NULL);
+	if (!image) {
+		allegro_message("Error Loading %s", filename);
+	}
+	
+	blit(image, bitmap, 0, 0, 0, 0, WIDTH, HEIGHT);
+	destroy_bitmap(image);
+}
+
+/*
+	Animate and displays the title screen
+*/
+void displayTitleScreen(FONT *titleFont, FONT *titleFont_sm) {
+	// Load image here instead of using the displayImage function because we don't want
+	// to load and destroy the image bitmap ever loop, as that takes too long
+	BITMAP *image;
+	image = load_bitmap(TITLE_BACKGROUND, NULL);
+	if (!image) {
+		allegro_message("Error Loading %s", TITLE_BACKGROUND);
+	}
+	
+	BITMAP *buffer;
+	buffer = create_bitmap(WIDTH, HEIGHT);
+	// Keeps track of the left-most character until the animation passes that characters'
+	// position defined in title_pos
+	int pointer = 0;
+	char title[11] = "To The Top"; // Char array containing individual letters of the title
+	int title_pos[10] = {150, 180, 210, 240, 270, 300, 330, 360, 390, 420};
+	
+	// Loops to animate the title transition from left to right.
+	for (int i = 0; i < HEIGHT; i++) {
+		blit(image, buffer, 0, 0, 0, 0, WIDTH, HEIGHT);
+		// Moves all of the characters who's positions are greater than the current character's final position
+		if (i < title_pos[pointer]) {
+			for (int k = pointer; k < strlen(title); k++) {
+				textprintf_ex(buffer, titleFont, i, 110, BLACK, -1, "%c", title[k]);				
+			}	
+		}
+		else { // If the current character's final position is passed, move onto the next character
+			if (pointer < strlen(title)) {
+				pointer++;					
+			}
+		}
+		// Display all of the characters where i has passed their final position (not animated anymore)
+		for (int j = 0; j < pointer; j++) {
+			textprintf_ex(buffer, titleFont, title_pos[j], 110, BLACK, -1, "%c", title[j]);				
+		}
+		acquire_screen();
+		blit(buffer, screen, 0, 0, 0, 0, WIDTH - 1, HEIGHT - 1);
+		release_screen();
+	}
+	// Draws the animations for the line under the title. Multiple lines are drawn to create the effect of a thicker line
+	for (int i = 150; i < 450; i++) {
+		hline(buffer, 200, 185, i, BLACK);
+		hline(buffer, 200, 186, i, BLACK);
+		hline(buffer, 200, 187, i, BLACK);
+		hline(buffer, 200, 188, i, BLACK);
+		acquire_screen();
+		blit(buffer, screen, 0, 0, 0, 0, WIDTH - 1, HEIGHT - 1);
+		release_screen();
+	}
+	
+	textprintf_centre_ex(screen, titleFont_sm, WIDTH / 2, HEIGHT / 2 + 9 * LINE_SPACING, BLACK, -1, "Press ENTER to Start");
+	
+	// Allows for toggling of sound and music on this screen
+	while (!key[KEY_ENTER]) {
+		toTheTopSounds->PollTurnOnOrOffMusic();
+	}
+	destroy_bitmap(buffer);
+	// Rest and clear any characters in the keyboard buffer so key presses don't transfer to the next screen
+	rest(100);
+	clear_keybuf();
+}
+
+/*
+	Displays the instructions screen
+*/
+void displayInstructions(FONT *titleFont, FONT *textFont) {
+	int xOffset = WIDTH / 2;
+	int yOffset = HEIGHT / 8;
+	int controlsX = xOffset - 125;
+	
+	drawImage(INSTRUCTIONS_BACKGROUND);
+	draw_pretty_box("Reach the entrance to the Castle in the Sky                  ", 70, yOffset, 10, 30, 32);	
+	textout_centre_ex(screen, titleFont, "Instructions", xOffset, yOffset, WHITE, 0);
+	textout_centre_ex(screen, textFont, "Reach the entrance to the Castle in the Sky", xOffset, yOffset + 10 * LINE_SPACING, WHITE, 0);
+	textout_centre_ex(screen, textFont, "while avoiding enemies and traps!", xOffset, yOffset + 12 * LINE_SPACING, WHITE, 0);
+
+	textout_centre_ex(screen, textFont, "---Controls---", xOffset, yOffset + 15 * LINE_SPACING, WHITE, 0);
+	textout_ex(screen, textFont, "Move Left        : LEFT ARROW KEY", controlsX, yOffset + 17 * LINE_SPACING, WHITE, 0);
+	textout_ex(screen, textFont, "Move Right       : RIGHT ARROW KEY", controlsX, yOffset + 19 * LINE_SPACING, WHITE, 0);
+	textout_ex(screen, textFont, "Jump             : SPACE", controlsX, yOffset + 21 * LINE_SPACING, WHITE, 0);
+	textout_ex(screen, textFont, "Toggle Music      : CTRL + M", controlsX, yOffset + 23 * LINE_SPACING, WHITE, 0);
+	textout_ex(screen, textFont, "Help Menu        : CTRL + H", controlsX, yOffset + 25 * LINE_SPACING, WHITE, 0);
+	textout_centre_ex(screen, textFont, "Press ENTER to Continue", xOffset, yOffset + 28 * LINE_SPACING, WHITE, 0);
+	
+	// Allows for toggling of sound and music on this screen
+	while (!key[KEY_ENTER]) {
+		toTheTopSounds->PollTurnOnOrOffMusic();
+	}
+	// Rest and clear any characters in the keyboard buffer so key presses don't transfer to the next screen
+	rest(100);
+	clear_keybuf();
+}
+
+/*
 	Displays the player's current level and the time that has elapsed
 */
 void displayGameInformation(Sprite *player, BITMAP *dest) {
@@ -30,6 +156,19 @@ void displayGameInformation(Sprite *player, BITMAP *dest) {
 	int yOffset = 5;
 	rectfill(dest, 0, 0, WIDTH, yOffset + 10, BLACK);
 	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Level Reached: %i       Spikes Level Reached: %i", 
+				  player->getLevelReached(), mapheight - spikesY / mapblockheight);
+	textprintf_ex(dest, font, WIDTH - 210, yOffset, WHITE, 0, "Time Elapsed: %i seconds", timeElapsed);
+	hline(dest, 0, yOffset + 10, WIDTH, WHITE);
+}
+
+/*
+	Displays the Winner Screen and user details
+*/
+void displayGameInformation(Sprite *player, BITMAP *dest) {
+	int xOffset = WIDTH / 2;
+	int yOffset = 5;
+	drawImage(WIN_BACKGROUND);
+	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Congratulations! You completed all ___ levels and rescued Ophelia!", 
 				  player->getLevelReached(), mapheight - spikesY / mapblockheight);
 	textprintf_ex(dest, font, WIDTH - 210, yOffset, WHITE, 0, "Time Elapsed: %i seconds", timeElapsed);
 	hline(dest, 0, yOffset + 10, WIDTH, WHITE);
@@ -90,8 +229,12 @@ int collided(int x, int y)
 	return blockdata->tl;
 }
 
-void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocation) {
+/*
+	Draw a line of sprites. This is used for drawing a line of spike sprites
+*/
+void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocation, Sound *sounds) {
 	int tempY = yLocation;
+	int soundsFlag = 0;
 	while (tempY < HEIGHT) {
 		for (int x = 0; x < mapwidth; x++) {
 			sprite->setX(x * mapblockwidth);
@@ -99,6 +242,12 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 			sprite->Draw(dest, 0, 0);
 		}
 		tempY += sprite->getHeight();
+	}
+	// If oldSpikesY != spikesY, then spikes have been displayed because spikesY has been updated by the timer
+	if (oldSpikesY != spikesY) {
+		sounds->setSoundEffect(SFX_SPIKES);
+		sounds->playSoundEffect();
+		oldSpikesY = spikesY;
 	}
 }
 
@@ -109,7 +258,7 @@ void initializePlayer(Sprite *player) {
 	player->Load("mappy/player2.bmp");
 	player->setX(WIDTH / 2);
 //	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
-	player->setY((1294 * mapblockheight) - player->getHeight() - mapblockheight - 1);
+	player->setY((1499 * mapblockheight) - player->getHeight() - mapblockheight - 1);
 	player->setWidth(24);
 	player->setHeight(22);
 	player->setAnimColumns(11);
@@ -121,12 +270,53 @@ void initializePlayer(Sprite *player) {
 	player->setVelY(5);
 }
 
-// BLOCK 463 IS BG BLOCK 465 IS FG
+/*
+	Moving platforms in Stage 3, sky stage
+*/
+Platform *initializeMovingPlatforms() {
+	int movingPlatformsStartingLevel = 1313;
+	int movingSpeed = 0;
+	Platform *movingPlatforms = new Platform();
+	while (movingPlatforms->getNumPlatforms() < NUM_PLATFORMS) {
+		// Platforms move between 1 to 2 in speed
+		movingSpeed = 1 + rand() % 2;
+		
+		movingPlatforms->CreatePlatform(mapblockwidth + rand() % (WIDTH - 3 * mapblockwidth), movingPlatformsStartingLevel * mapblockheight, movingSpeed, 0);
+		movingPlatformsStartingLevel -= 2;
+	}
+	return movingPlatforms;
+}
+
+/*
+	Function that returns true if the player wants to retry the game, or false if they want to quit the game.
+*/
+bool chooseToContinue() {
+	while(1) {
+		// Allows for toggling of sound and music on this screen
+		toTheTopSounds->PollTurnOnOrOffMusic();
+		if (key[KEY_ESC]) {
+			return false;
+		}
+		if (key[KEY_ENTER]) {
+			return true;
+		}
+	}
+}
+
+/*
+	Checks for CTRL + H key combination to play the pause sound and display the help screen
+*/
+void helpMenu(FONT *helpTitle, FONT *helpFont) {
+	if ((key[KEY_LCONTROL] && key[KEY_H]) ||
+		(key[KEY_RCONTROL] && key[KEY_H])) { 
+		displayInstructions(helpTitle, helpFont);
+	}
+}
+
 int main(void) {
 	int mapxoff, mapyoff;
 	int spikeTimer = 3000;
 	int spikeYThreshold = 1425;
-	int cloudPlatformsStartingLevel = 1313;
 	
 	gameoverFlag = 0;
 	allegro_init();	
@@ -139,7 +329,7 @@ int main(void) {
 		allegro_message("Error initializing sound system!");
 		return 1;
 	}
-	//toTheTopSounds = new Sound();
+	toTheTopSounds = new Sound();
 	
 	int ret = set_gfx_mode(MODE_W, WIDTH, HEIGHT, 0, 0);
 	if (ret != 0) {
@@ -151,17 +341,7 @@ int main(void) {
 	BITMAP *buffer = create_bitmap(WIDTH, HEIGHT);
 	clear(buffer);
 	
-	MapLoad("mappy/toTheTop.fmp");
-	
-	// Update the spike's location every 3 seconds to move up a level
-	LOCK_VARIABLE(spikesY);
-    LOCK_FUNCTION(update_deathSpikes);
-    install_int(update_deathSpikes, spikeTimer);
-    
-    // Update the timer that the user is alive
-	LOCK_VARIABLE(timeElapsed);
-	LOCK_FUNCTION(update_time);
-	install_int(update_time, 1000);
+	MapLoad(MAP);
 	
 	// Initialize Spike Sprite
 	Sprite *spike = new Sprite();
@@ -184,19 +364,32 @@ int main(void) {
 	EnemyHandler *enemyHandler = new EnemyHandler();
 	enemyHandler->SpawnEnemies();
 
-	// Initialize Moving Platforms in the Cave
-	int movingSpeed = 0;
-	Platform *cloudPlatforms = new Platform();
-	while (cloudPlatforms->getNumPlatforms() < NUM_PLATFORMS) {
-		// Platforms move between 1 to 2 in speed
-		movingSpeed = 1 + rand() % 2;
+	// Create the moving cloud platforms to be used in Stage 3
+	Platform *cloudPlatforms = initializeMovingPlatforms();
+	
+	FONT *tempus_sans_itc_48 = load_font("fonts/Tempus_Sans_ITC_48.pcx", NULL, NULL);
+	FONT *tempus_sans_itc_24 = load_font("fonts/Tempus_Sans_ITC_24.pcx", NULL, NULL);
+	FONT *tempus_sans_itc_9 = load_font("fonts/Tempus_Sans_ITC_9.pcx", NULL, NULL);
 		
-		cloudPlatforms->CreatePlatform(mapblockwidth + rand() % (WIDTH - 3 * mapblockwidth), cloudPlatformsStartingLevel * mapblockheight, movingSpeed, 0);
-		cloudPlatformsStartingLevel -= 2;
-	}
+	displayTitleScreen(tempus_sans_itc_48, tempus_sans_itc_24);
+	displayInstructions(tempus_sans_itc_48, tempus_sans_itc_9);
+	
+	// Install interrupts last, because we don't want them to start up when the game starts
+	// Update the spike's location every 3 seconds to move up a level
+	LOCK_VARIABLE(spikesY);
+    LOCK_FUNCTION(update_deathSpikes);
+    install_int(update_deathSpikes, spikeTimer);
+    
+    // Update the timer that the user is alive
+	LOCK_VARIABLE(timeElapsed);
+	LOCK_FUNCTION(update_time);
+	install_int(update_time, 1000);
+	
 	while(1) {
+		helpMenu(tempus_sans_itc_48, tempus_sans_itc_9);
+		toTheTopSounds->PollTurnOnOrOffMusic();
 		player->UpdateLevelReached();
-		player->PlayerControls();
+		player->PlayerControls(toTheTopSounds);
 		
 		// Update the spike's timer and threshold if the current threshold is passed.
 		if (player->getY() < (spikeYThreshold * mapblockheight)) {
@@ -243,7 +436,7 @@ int main(void) {
 //			printf("SPIKES START: %i\n", spikesY - mapyoff);
 //			printf("DIFF: %f\n", player->getY() - spikesY);
 			// Display spikes from HEIGHT - (mapyoff + HEIGHT - spikesY) to the bottom of the screen
-			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
+			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff, toTheTopSounds);
 		}
 		
 		// Draw the platforms if they are in range
@@ -267,12 +460,42 @@ int main(void) {
 		}
 		
 		if (gameoverFlag == 1) {
+			toTheTopSounds->stopMusic();
+			toTheTopSounds->setSoundEffect(SFX_DEATH);
+			toTheTopSounds->playSoundEffect();
 			// Ensure spikes are drawn, to show death from the spikes properly, since the spikes update
 			// occur after spikes are drawn, but not draw the next level of spikes
-			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff);
+			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff, toTheTopSounds);
 			blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
 			displayGameOverScreen();
-			while(!key[KEY_ESC]);
+			
+			// Let the sound effect play out a bit
+			rest(1000);
+			
+			// If they choose to restart, reset game values
+			if (chooseToContinue()) {
+				gameoverFlag = 0;
+				spikeTimer = 3000;
+				spikesY = BOTTOM;
+				timeElapsed = 0;
+				toTheTopSounds->playMusic();
+				player->setX(WIDTH / 2);
+				player->setY((1499 * mapblockheight) - player->getHeight() - mapblockheight - 1);
+				
+				// Respawn enemies
+				delete enemyHandler;
+				enemyHandler = new EnemyHandler();
+				enemyHandler->SpawnEnemies();
+				
+				// Reset interrupts
+				remove_int(update_time);
+				install_int(update_time, 1000);
+				remove_int(update_deathSpikes);
+				install_int(update_deathSpikes, spikeTimer);
+			}
+			else {
+				break;
+			}
 		}
 		
 		if (gameoverFlag == -1) {
