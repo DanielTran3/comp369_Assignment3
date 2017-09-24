@@ -34,8 +34,6 @@ void Platform::DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOf
 		if ((_platforms[i]->getY() > topOfScreen) && (_platforms[i]->getY() < (topOfScreen + HEIGHT))) {
 			_platforms[i]->Move();
 			_platforms[i]->Draw(dest, xOffset, yOffset);
-//			printf("Platform Number: %i\n", i);
-//			printf("platform y: %f\n", _platforms[i]->getY());
 			
 			// Check for player collision. Done in this function to reduce number of iterations over all enemies
 			CollideWithTop(player, _platforms[i]);
@@ -47,7 +45,6 @@ void Platform::DrawPlatforms(BITMAP *dest, int topOfScreen, int xOffset, int yOf
 void Platform::CollideWithTop(Sprite *player, Sprite *platform) {
 	if (platform->PointInside(player->getX() + player->getWidth() / 2, player->getY() + player->getHeight()))
 	{
-		printf("CONTACTED");
 		player->setJump(MAXJUMP);
 		player->setY(platform->getY() - player->getHeight());
 	}

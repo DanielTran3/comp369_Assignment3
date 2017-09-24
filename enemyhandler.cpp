@@ -44,7 +44,6 @@ int EnemyHandler::DrawEnemies(BITMAP *dest, int topOfScreen, int xOffset, int yO
 	for (int i = 0; i < _count; i++) {
 		if ((_sprites[i]->getY() > topOfScreen) && (_sprites[i]->getY() < (topOfScreen + HEIGHT))) {
 			_sprites[i]->Walk();
-//			printf("Drawing enemy #%i\n", i);
 			_sprites[i]->DrawFrame(dest, xOffset, yOffset);
 			
 			// Check for player collision. Done in this function to reduce number of iterations over all enemies
@@ -63,8 +62,6 @@ int CollideWithBlock(int x, int y)
 {
     BLKSTR *blockdata;
 	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
-//	printf("Blockdata: %c\n", blockdata->tl);
-//	printf("x: %i  y: %i\n", x, y);
 	return blockdata->tl;
 }
 
@@ -85,15 +82,11 @@ int EnemyHandler::GetPlatform(int level) {
 			if (++tileCount > PLATFORM_LENGTH) {
 				break;
 			}
-			//printf("level: %i\n", level);
-			//printf("endingPlatformTile: %i\n", endingPlatformTile);
-			//printf("tileCount: %i\n", tileCount);
 		}
 		else {
 			tileCount = 0;
 		}
 	}
-	//printf("return: %i\n", tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1);
 	return tileCount > PLATFORM_LENGTH ? endingPlatformTile : -1;
 }
 
@@ -118,13 +111,11 @@ void EnemyHandler::SpawnEnemies() {
 			// If no surface is found, then move up a level
 			if (platformEndingTile == -1) {
 				spawningLevel -= 1;
-				printf("None LEVEL: %i\n", spawningLevel);
 				continue;			
 			}
 			
 			// Location has been found, break and move onto the next 10 levels			
 			else {
-				printf("FOUND LEVEL: %i\n", spawningLevel);
 				// Move spawningLevel up one to spawn enemy ontop of the level we found
 				spawningLevel -= 1;
 				// Spawn at the ending location -1 to reduce glitches with sprite being caught

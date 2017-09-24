@@ -14,8 +14,9 @@
 
 #define TITLE_BACKGROUND "backgrounds/TitleBackground.pcx"
 #define INSTRUCTIONS_BACKGROUND "backgrounds/InstructionsBackground.pcx"
-#define WIN_BACKGROUND "backgrounds/WinBackground.pcx"
+#define WIN_BACKGROUND "backgrounds/WinBackground.bmp"
 
+#define PLAYER "mappy/player.bmp"
 #define SPIKE_BMP "mappy/deathSpike.bmp"
 
 #define MAP "mappy/toTheTop.fmp"

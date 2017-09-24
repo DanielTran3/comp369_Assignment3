@@ -12,7 +12,6 @@ int gameoverFlag = 0;
 */
 void update_deathSpikes(void) {
 	spikesY -= mapblockheight;
-//	printf("UPDATING SPIKES: %i\n", spikesY);
 }
 END_OF_FUNCTION(update_deathSpikes)
 
@@ -70,7 +69,7 @@ void displayTitleScreen(FONT *titleFont, FONT *titleFont_sm) {
 	// position defined in title_pos
 	int pointer = 0;
 	char title[11] = "To The Top"; // Char array containing individual letters of the title
-	int title_pos[10] = {150, 180, 210, 240, 270, 300, 330, 360, 390, 420};
+	int title_pos[10] = {150, 180, 210, 240, 270, 300, 330, 360, 390, 430};
 	
 	// Loops to animate the title transition from left to right.
 	for (int i = 0; i < HEIGHT; i++) {
@@ -164,33 +163,37 @@ void displayGameInformation(Sprite *player, BITMAP *dest) {
 /*
 	Displays the Winner Screen and user details
 */
-void displayGameInformation(Sprite *player, BITMAP *dest) {
-	int xOffset = WIDTH / 2;
-	int yOffset = 5;
+void displayWinScreen() {
+	int xOffset = WIDTH / 2 + 10;
+	int yOffset = HEIGHT / 2;
+	FONT *brush_script_mt_48 = load_font("fonts/Brush_Script_MT_48.pcx", NULL, NULL);
+	FONT *chaparral_pro_light_12 = load_font("fonts/Chaparral_Pro_Light_12.pcx", NULL, NULL);
+	if (!brush_script_mt_48 || !chaparral_pro_light_12) {
+		allegro_message("Cannot find one or more font files");
+	}
 	drawImage(WIN_BACKGROUND);
-	textprintf_ex(dest, font, 10, yOffset, WHITE, 0, "Congratulations! You completed all ___ levels and rescued Ophelia!", 
-				  player->getLevelReached(), mapheight - spikesY / mapblockheight);
-	textprintf_ex(dest, font, WIDTH - 210, yOffset, WHITE, 0, "Time Elapsed: %i seconds", timeElapsed);
-	hline(dest, 0, yOffset + 10, WIDTH, WHITE);
+	draw_pretty_box("Congratulations! You passed all 234 levels and rescued Ophelia!", xOffset / 4, yOffset / 2, 0, 30, 25);
+	textprintf_centre_ex(screen, brush_script_mt_48, xOffset, yOffset / 2, WHITE, 0, "Congratulations!");
+	textprintf_centre_ex(screen, chaparral_pro_light_12, xOffset, yOffset, WHITE, 0, "You passed all 234 levels and rescued Ophelia!", timeElapsed);
+	textprintf_centre_ex(screen, chaparral_pro_light_12, xOffset, yOffset + 4 * LINE_SPACING, WHITE, 0, "Time Elapsed: %i Seconds", timeElapsed);
+	textprintf_centre_ex(screen, chaparral_pro_light_12, xOffset, yOffset + 8 * LINE_SPACING, WHITE, 0, "Press ESC to Quit!");
+	toTheTopSounds->stopMusic();
+	toTheTopSounds->setBGM(BGM_WIN);
+	toTheTopSounds->playMusic();
 }
 
 /*
 	Displays the game over screen
 */
-void displayGameOverScreen() {
-//void displayGameOverScreen(PlayerInfo *player, FONT *gameOverFont) {
-//	drawImage(GAMEOVER_BACKGROUND);
+void displayGameOverScreen(Sprite *player, FONT *gameOverTitleFont, FONT *gameOverTextFont) {
     int xOffset = WIDTH / 2;
     int yOffset = HEIGHT / 4 + 50;
 
     draw_pretty_box("Press Enter To Retry or ESC to Exit", xOffset / 2 + 20, yOffset, 30, 30, 14);
-//    textprintf_centre_ex(screen, gameOverFont, xOffset, yOffset - 20, WHITE, -1, "Game Over");
-    textprintf_centre_ex(screen, font, xOffset, yOffset - 20, WHITE, -1, "Game Over");
-//	textprintf_centre_ex(screen, font, xOffset, yOffset + 5 * LINE_SPACING, WHITE, -1, "Your Score:    %i", player->getScore());
-//    textprintf_centre_ex(screen, font, xOffset, yOffset + 6.5 * LINE_SPACING, WHITE, -1, "Highest Score: %i", player->getHighestScore());
-//    textprintf_centre_ex(screen, font, xOffset, yOffset + 9 * LINE_SPACING, WHITE, -1, "Your Level:    %i", player->getLevel());
-//    textprintf_centre_ex(screen, font, xOffset, yOffset + 10.5 * LINE_SPACING, WHITE, -1, "Highest Level: %i", player->getHighestLevel());
-	textprintf_centre_ex(screen, font, xOffset, yOffset + 13 * LINE_SPACING, WHITE, -1, "Press Enter To Retry or ESC to Exit");
+    textprintf_centre_ex(screen, gameOverTitleFont, xOffset, yOffset - 20, WHITE, -1, "Game Over");
+	textprintf_centre_ex(screen, gameOverTextFont, xOffset, yOffset + 8 * LINE_SPACING, WHITE, -1, "Level Reached: %i", player->getLevelReached());
+	textprintf_centre_ex(screen, gameOverTextFont, xOffset, yOffset + 10 * LINE_SPACING, WHITE, -1, "Time Elapsed: %i Seconds", timeElapsed);
+	textprintf_centre_ex(screen, gameOverTextFont, xOffset, yOffset + 13 * LINE_SPACING, WHITE, -1, "Press Enter To Retry or ESC to Exit");
 }
 
 /*
@@ -222,6 +225,9 @@ BITMAP *grabframe(BITMAP *source,
     return temp;
 }
 
+/*
+	Check for collision with a mappy block
+*/
 int collided(int x, int y)
 {
     BLKSTR *blockdata;
@@ -255,9 +261,8 @@ void drawHLineOfSprites(Sprite *sprite, BITMAP *dest, int xDistance, int yLocati
 	Function to initialize the player's starting position and settings;
 */
 void initializePlayer(Sprite *player) {
-	player->Load("mappy/player2.bmp");
+	player->Load(PLAYER);
 	player->setX(WIDTH / 2);
-//	player->setY(BOTTOM - player->getHeight() - mapblockheight - 1);
 	player->setY((1499 * mapblockheight) - player->getHeight() - mapblockheight - 1);
 	player->setWidth(24);
 	player->setHeight(22);
@@ -314,11 +319,13 @@ void helpMenu(FONT *helpTitle, FONT *helpFont) {
 }
 
 int main(void) {
+	// Initial Variables
 	int mapxoff, mapyoff;
 	int spikeTimer = 3000;
 	int spikeYThreshold = 1425;
-	
 	gameoverFlag = 0;
+	
+	// Set up Allegro
 	allegro_init();	
 	set_color_depth(24);
 	install_keyboard();
@@ -329,6 +336,7 @@ int main(void) {
 		allegro_message("Error initializing sound system!");
 		return 1;
 	}
+	// Set up sounds
 	toTheTopSounds = new Sound();
 	
 	int ret = set_gfx_mode(MODE_W, WIDTH, HEIGHT, 0, 0);
@@ -341,12 +349,12 @@ int main(void) {
 	BITMAP *buffer = create_bitmap(WIDTH, HEIGHT);
 	clear(buffer);
 	
+	// Load Mappy Map
 	MapLoad(MAP);
 	
 	// Initialize Spike Sprite
 	Sprite *spike = new Sprite();
 	ret = spike->Load(SPIKE_BMP);
-	
 	if (ret == 0) {
 		allegro_message("Error loading mappy/deathSpike.bmp");
 		return 1;
@@ -370,6 +378,10 @@ int main(void) {
 	FONT *tempus_sans_itc_48 = load_font("fonts/Tempus_Sans_ITC_48.pcx", NULL, NULL);
 	FONT *tempus_sans_itc_24 = load_font("fonts/Tempus_Sans_ITC_24.pcx", NULL, NULL);
 	FONT *tempus_sans_itc_9 = load_font("fonts/Tempus_Sans_ITC_9.pcx", NULL, NULL);
+	if (!tempus_sans_itc_48 || !tempus_sans_itc_24 || !tempus_sans_itc_9) {
+		allegro_message("Cannot find one or more font files");
+		return 1;
+	}
 		
 	displayTitleScreen(tempus_sans_itc_48, tempus_sans_itc_24);
 	displayInstructions(tempus_sans_itc_48, tempus_sans_itc_9);
@@ -385,7 +397,7 @@ int main(void) {
 	LOCK_FUNCTION(update_time);
 	install_int(update_time, 1000);
 	
-	while(1) {
+	while(!key[KEY_ESC]) {
 		helpMenu(tempus_sans_itc_48, tempus_sans_itc_9);
 		toTheTopSounds->PollTurnOnOrOffMusic();
 		player->UpdateLevelReached();
@@ -393,7 +405,7 @@ int main(void) {
 		
 		// Update the spike's timer and threshold if the current threshold is passed.
 		if (player->getY() < (spikeYThreshold * mapblockheight)) {
-			if (spikeTimer > 1) {
+			if (spikeTimer > 1000) {
 				spikeYThreshold -= 75;
 				spikeTimer -= 1000;
 		    	install_int(update_deathSpikes, spikeTimer);
@@ -423,7 +435,6 @@ int main(void) {
 		if (mapyoff > (mapheight * mapblockheight - HEIGHT)) 
             mapyoff = mapheight * mapblockheight - HEIGHT;
         
-//        printf("mapxoff: %i  mapyoff: %i\n", mapxoff, mapyoff);
 		//draw the background tiles
 		MapDrawBG(buffer, mapxoff, mapyoff, 0, 0, WIDTH-1, HEIGHT-1);
 
@@ -433,8 +444,6 @@ int main(void) {
 		// If mapyoff + HEIGHT (Bottom of the screen) > spikesY, then the spikes should be
 		// displayed on the screen.
 		if (mapyoff + HEIGHT > spikesY) {
-//			printf("SPIKES START: %i\n", spikesY - mapyoff);
-//			printf("DIFF: %f\n", player->getY() - spikesY);
 			// Display spikes from HEIGHT - (mapyoff + HEIGHT - spikesY) to the bottom of the screen
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff, toTheTopSounds);
 		}
@@ -448,7 +457,11 @@ int main(void) {
 		}
 		// Draw the player
 		player->DrawFrame(buffer, mapxoff, mapyoff);
+		
+		// Draw player statistics
 		displayGameInformation(player, buffer);
+		
+		// Draw the screen
 		vsync();
         acquire_screen();
 		blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
@@ -467,7 +480,7 @@ int main(void) {
 			// occur after spikes are drawn, but not draw the next level of spikes
 			drawHLineOfSprites(spike, buffer, WIDTH, spikesY - mapyoff, toTheTopSounds);
 			blit(buffer, screen, 0, 0, 0, 0, WIDTH-1, HEIGHT-1);
-			displayGameOverScreen();
+			displayGameOverScreen(player, tempus_sans_itc_48, tempus_sans_itc_9);
 			
 			// Let the sound effect play out a bit
 			rest(1000);
@@ -476,6 +489,7 @@ int main(void) {
 			if (chooseToContinue()) {
 				gameoverFlag = 0;
 				spikeTimer = 3000;
+				spikeYThreshold = 1425;
 				spikesY = BOTTOM;
 				timeElapsed = 0;
 				toTheTopSounds->playMusic();
@@ -499,13 +513,22 @@ int main(void) {
 		}
 		
 		if (gameoverFlag == -1) {
-			displayGameOverScreen();
-		}
-		
-		if (key[KEY_ESC]) {
+			displayWinScreen();
+			while(!key[KEY_ESC]);
 			break;
 		}
 	}
+	
+	// Clean up the game
+	remove_int(update_time);
+	remove_int(update_deathSpikes);
+	destroy_bitmap(buffer);
+
+	delete enemyHandler;
+	delete cloudPlatforms;
+	delete player;
+	delete spike;
+	
 	allegro_exit();
 	return 1;
 }

@@ -116,15 +116,11 @@ int Sprite::CollideWithBlock(int x, int y)
 {
     BLKSTR *blockdata;
 	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
-//	printf("Blockdata: %c\n", blockdata->tl);
-//	printf("x: %i  y: %i\n", x, y);
 	return blockdata->tl;
 }
 int Sprite::GetBlockData1(int x, int y) {
     BLKSTR *blockdata;
 	blockdata = MapGetBlock(x/mapblockwidth, y/mapblockheight);
-	//printf("Block: %i\n", blockdata->user1);
-
 	return blockdata->user1;	
 }
 
@@ -176,7 +172,7 @@ void Sprite::PlayerControls(Sound *sounds) {
         _y -= _jump / 3; 
         _jump--; 
     }
-//	printf("jump: %i\n", _jump);
+
 	if (_jump < 0) 
     { 
         if (CollideWithBlock(_x + _width / 2, _y + _height))
@@ -256,7 +252,6 @@ void Sprite::Move() {
 	UpdatePosition();
 	// Test for collision below sprite and sprite in front of sprite
 	if (CollideWithBlock(_x + _width + 1, _y) || CollideWithBlock(_x - 1, _y)) {
-		printf("COLLIDED\n");
 		_direction *= -1;
 		_x = oldX;
 		_y = oldY;

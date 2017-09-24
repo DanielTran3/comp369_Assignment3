@@ -4,6 +4,7 @@
 #include <string>
 
 #define BGM_TOTHETOP "sounds/BGM_Epic.wav"
+#define BGM_WIN "sounds/BGM_Win.wav"
 #define SFX_JUMP "sounds/SFX_Jump.wav"
 #define SFX_DEATH "sounds/SFX_Death.wav"
 #define SFX_SPIKES "sounds/SFX_Spikes.wav"
